@@ -46,8 +46,9 @@ int main(int argc, char *argv[])
 	if (fd == -1)
 		fatal("epoll_create1(2)");
 
-	ev.events = EPOLLIN;
+	ev.events = EPOLLIN|EPOLLOUT;
 	ev.data.fd = sc.fd;
+	ev.data.ptr = (void *)&sc;
 	ret = epoll_ctl(fd, EPOLL_CTL_ADD, sc.fd, &ev);
 	if (ret == -1)
 		fatal("epoll_ctl(2)");
