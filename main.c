@@ -8,17 +8,40 @@
 #include "utils.h"
 
 struct scanner {
+	int fd;
 	int family;
 	int type;
 	int protocol;
-	int fd;
+	int (*reader)(struct scanner *sc);
+	int (*writer)(struct scanner *sc);
 };
 
-void init(struct scanner *sc)
+void init(struct scanner *sc, int eventfd, int family, int proto)
 {
+	struct epoll_event ev;
+	int ret;
+
+	sc->family = family;
+	sc->protocol = proto;
+	if (proto == IPPROTO_TCP)
+		sc->type = SOCK_STREAM;
+	else
+		sc->type = SOCK_DGRAM;
 	sc->fd = socket(sc->family, sc->type, sc->protocol);
 	if (sc->fd == -1)
 		fatal("socket(2)");
+
+	/* We'll set this later. */
+	sc->reader = NULL;
+	sc->writer = NULL;
+
+	/* Register to the event manager. */
+	ev.events = EPOLLIN|EPOLLOUT;
+	ev.data.fd = sc->fd;
+	ev.data.ptr = (void *)&sc;
+	ret = epoll_ctl(eventfd, EPOLL_CTL_ADD, sc->fd, &ev);
+	if (ret == -1)
+		fatal("epoll_ctl(2)");
 }
 
 void term(struct scanner *sc)
@@ -28,33 +51,48 @@ void term(struct scanner *sc)
 	sc->fd = -1;
 }
 
+static inline void reader(struct scanner *sc)
+{
+	if (sc->reader)
+		(*sc->reader)(sc);
+}
+
+static inline void writer(struct scanner *sc)
+{
+	if (sc->writer)
+		(*sc->writer)(sc);
+}
+
 int main(int argc, char *argv[])
 {
-#define MAX_EVENTS 10
-	struct epoll_event ev, events[MAX_EVENTS];
 	struct scanner sc;
-	int ret;
 	int fd;
-
-	/* This will be set through the command line. */
-	sc.family = AF_INET;
-	sc.type = SOCK_STREAM;
-	sc.protocol = IPPROTO_TCP;
-	init(&sc);
 
 	fd = epoll_create1(0);
 	if (fd == -1)
 		fatal("epoll_create1(2)");
 
-	ev.events = EPOLLIN|EPOLLOUT;
-	ev.data.fd = sc.fd;
-	ev.data.ptr = (void *)&sc;
-	ret = epoll_ctl(fd, EPOLL_CTL_ADD, sc.fd, &ev);
-	if (ret == -1)
-		fatal("epoll_ctl(2)");
+	/* Initialize scanner. */
+	init(&sc, fd, AF_INET, IPPROTO_TCP);
 
-	close(fd);
+	for (;;) {
+		struct epoll_event ev;
+		struct scanner *scp;
+		int nfds;
+
+		nfds = epoll_wait(fd, &ev, 1, -1);
+		if (nfds == -1)
+			fatal("epoll_wait(2)");
+
+		scp = (struct scanner *) ev.data.ptr;
+		if (ev.events & EPOLLIN)
+			reader(scp);
+		if (ev.events & EPOLLOUT)
+			writer(scp);
+	}
+
 	term(&sc);
+	close(fd);
 
 	exit(EXIT_SUCCESS);
 }
