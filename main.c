@@ -38,6 +38,9 @@ struct scanner {
 	int start_port;
 	int end_port;
 
+	/* TCP header checksum buffer. */
+	char cbuf[BUFSIZ];
+
 	/* Reader and writer of the data packages. */
 	int (*reader)(struct scanner *sc);
 	int (*writer)(struct scanner *sc);
@@ -102,7 +105,8 @@ static unsigned short checksum(unsigned short *buf, int nwords)
 	return (unsigned short)(~sum);
 }
 
-static unsigned short tcp4_checksum(struct iphdr *ip, struct tcphdr *tcp)
+static unsigned short tcp4_checksum(struct scanner *sc, struct iphdr *ip,
+		struct tcphdr *tcp)
 {
 	struct iptmp {
 		u_int32_t saddr;
@@ -119,11 +123,10 @@ static unsigned short tcp4_checksum(struct iphdr *ip, struct tcphdr *tcp)
 		.length = htons(20),
 		.tcp = *tcp
 	};
-	char buf[IP_MAXPACKET];
 
-	memcpy(buf, &iptmp, sizeof(iptmp));
+	memcpy(sc->cbuf, &iptmp, sizeof(iptmp));
 
-	return checksum((uint16_t *) buf, sizeof(iptmp));
+	return checksum((uint16_t *) sc->cbuf, sizeof(iptmp));
 }
 
 static int writer(struct scanner *sc)
@@ -164,7 +167,7 @@ static int writer(struct scanner *sc)
 	tcp->th_win = 0;
 	tcp->th_sum = 0;
 	tcp->th_urp = 0;
-	tcp->th_sum = tcp4_checksum(ip, tcp);
+	tcp->th_sum = tcp4_checksum(sc, ip, tcp);
 
 	dump(sc->buf, len);
 
