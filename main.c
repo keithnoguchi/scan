@@ -22,23 +22,23 @@ struct scanner {
 	struct epoll_event ev;
 	int eventfd;
 
-	/* Raw socket for data packets. */
+	/* Raw socket for the data packets. */
 	int rawfd;
 
-	/* Reader/writer buffers. */
+	/* Read/write buffers. */
 	char buf[BUFSIZ];
 
-	/* Source and destination address info. */
+	/* Source and destination addresses. */
 	struct addrinfo hints;
 	struct sockaddr_storage src;
 	struct addrinfo *dst;
 
-	/* Scanning port info. */
+	/* Scanning port related info. */
 	int next_port;
 	int start_port;
 	int end_port;
 
-	/* Reader and writer of the raw socket. */
+	/* Reader and writer of the data packages. */
 	int (*reader)(struct scanner *sc);
 	int (*writer)(struct scanner *sc);
 };
