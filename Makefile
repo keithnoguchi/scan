@@ -5,7 +5,7 @@ OBJ := $(SRC:.c=.o)
 TMP := *~ *.swp a.out
 DEPS = utils.h scanner.h
 
-.PHONY: all scanner clean
+.PHONY: all clean
 all: $(TARGET)
 $(TARGET): $(OBJ)
 	$(CC) -o $@ $^
