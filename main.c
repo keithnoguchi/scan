@@ -5,6 +5,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <libnet.h>
 #include <netdb.h>
 
 #include "utils.h"
@@ -28,6 +29,9 @@ struct scanner {
 	int next_port;
 	int start_port;
 	int end_port;
+
+	/* Libnet handler for packat encoding/decoding. */
+	libnet_t *libnet;
 
 	/* Reader and writer of the raw socket. */
 	int (*reader)(struct scanner *sc);
@@ -93,6 +97,14 @@ static int writer(struct scanner *sc)
 
 void scanner_tcp4_init(struct scanner *sc)
 {
+	/* Initialize libnet random number generator. */
+	sc->libnet = libnet_init(LIBNET_RAW4, NULL, NULL);
+	if (sc->libnet == NULL)
+		fatal("libnet_init(3)");
+
+	/* Random number generator. */
+	libnet_seed_prand(sc->libnet);
+
 	sc->reader = reader;
 	sc->writer = writer;
 }
@@ -157,8 +169,16 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 
 void scanner_term(struct scanner *sc)
 {
-	if (sc->addr != NULL)
+	if (sc->libnet != NULL) {
+		libnet_destroy(sc->libnet);
+		sc->libnet = NULL;
+	}
+
+	if (sc->addr != NULL) {
 		freeaddrinfo(sc->addr);
+		sc->addr = NULL;
+	}
+
 	if (sc->rawfd != -1) {
 		if (sc->eventfd != -1)
 			epoll_ctl(sc->eventfd, EPOLL_CTL_DEL,
