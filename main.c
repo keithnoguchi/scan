@@ -106,8 +106,7 @@ static unsigned short checksum(unsigned short *buf, int nwords)
 	return (unsigned short)(~sum);
 }
 
-static unsigned short tcp4_checksum(struct scanner *sc, struct iphdr *ip,
-		struct tcphdr *tcp)
+static unsigned short tcp4_checksum(struct scanner *sc, struct tcphdr *tcp)
 {
 	struct iptmp {
 		u_int32_t saddr;
@@ -148,7 +147,7 @@ static int writer(struct scanner *sc)
 	tcp->th_win = 0;
 	tcp->th_sum = 0;
 	tcp->th_urp = 0;
-	tcp->th_sum = tcp4_checksum(sc, ip, tcp);
+	tcp->th_sum = tcp4_checksum(sc, tcp);
 
 	dump(sc->obuf, len);
 
@@ -163,7 +162,8 @@ static int writer(struct scanner *sc)
 		epoll_ctl(sc->eventfd, EPOLL_CTL_MOD, sc->rawfd, &sc->ev);
 		printf("done with sending\n");
 	}
-	return 0;
+
+	return ret;
 }
 
 void scanner_tcp4_init(struct scanner *sc)
