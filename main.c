@@ -11,6 +11,9 @@ static const int start_port = 0;
 static const int end_port = 65535;
 
 struct scanner {
+	/* Event manager. */
+	struct epoll_event ev;
+
 	/* Sockets. */
 	int eventfd;
 	int rawfd;
@@ -110,18 +113,17 @@ int main(int argc, char *argv[])
 	eventfd = init(&sc, AF_INET, IPPROTO_TCP);
 
 	for (;;) {
-		struct epoll_event ev;
 		struct scanner *scp;
 		int nfds;
 
-		nfds = epoll_wait(eventfd, &ev, 1, -1);
+		nfds = epoll_wait(eventfd, &sc.ev, 1, -1);
 		if (nfds == -1)
 			fatal("epoll_wait(2)");
 
-		scp = (struct scanner *) ev.data.ptr;
-		if (ev.events & EPOLLIN)
+		scp = (struct scanner *) sc.ev.data.ptr;
+		if (sc.ev.events & EPOLLIN)
 			reader(scp);
-		if (ev.events & EPOLLOUT)
+		if (sc.ev.events & EPOLLOUT)
 			writer(scp);
 	}
 	term(&sc);
