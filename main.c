@@ -88,6 +88,7 @@ static int reader(struct scanner *sc)
 
 static int writer(struct scanner *sc)
 {
+	struct sockaddr_in *sin = (struct sockaddr_in *) sc->addr->ai_addr;
 	unsigned char *buf;
 	size_t len;
 	int ret;
@@ -118,7 +119,7 @@ static int writer(struct scanner *sc)
 			IPPROTO_TCP,                               /* proto */
 			0,                                         /* sum */
 			libnet_get_prand(LIBNET_PRu32),            /* sa */
-			libnet_get_prand(LIBNET_PRu32),            /* da */
+			sin->sin_addr.s_addr,                      /* da */
 			libnet_getpbuf(sc->libnet, sc->tcp),       /* data */
 			libnet_getpbuf_size(sc->libnet, sc->tcp),  /* dlen */
 			sc->libnet,
@@ -129,6 +130,8 @@ static int writer(struct scanner *sc)
 	dump(buf, len);
 
 	ret = send(sc->rawfd, buf, len, 0);
+	if (ret != len)
+		fatal("send()");
 
 	if (++sc->next_port > sc->end_port) {
 		/* Disable writer event. */
