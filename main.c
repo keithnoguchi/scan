@@ -5,7 +5,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <libnet.h>
+#include <netinet/ip.h>
 #include <netdb.h>
 
 #include "utils.h"
@@ -29,9 +29,6 @@ struct scanner {
 	int next_port;
 	int start_port;
 	int end_port;
-
-	/* Libnet handler for packat encoding/decoding. */
-	libnet_t *libnet;
 
 	/* Reader and writer of the raw socket. */
 	int (*reader)(struct scanner *sc);
@@ -77,7 +74,7 @@ static int reader(struct scanner *sc)
 
 	ret = recv(sc->rawfd, sc->buf, sizeof(sc->buf), 0);
 	if (ret < 0)
-		fatal("recv(3)");
+		fatal("tcp4_reader.recv(3)");
 
 	dump(sc->buf, ret);
 
@@ -86,6 +83,29 @@ static int reader(struct scanner *sc)
 
 static int writer(struct scanner *sc)
 {
+	struct sockaddr_in *sin
+		= (struct sockaddr_in *) sc->addr->ai_addr;
+	struct iphdr *ip = (struct iphdr *) sc->buf;
+	int ret;
+
+	/* IP header. */
+	ip->ihl = 5;
+	ip->version = IPVERSION;
+	ip->tos = 16;
+	ip->tot_len = sizeof(struct iphdr);
+	ip->id = htons(54321);
+	ip->ttl = 64;
+	ip->protocol = IPPROTO_TCP;
+	ip->check = 0;
+	ip->saddr = 0;
+	ip->daddr = sin->sin_addr.s_addr;
+
+	dump(sc->buf, 20);
+
+	ret = send(sc->rawfd, sc->buf, 20, 0);
+	if (ret != 20)
+		fatal("tcp4_writer.send(3)");
+
 	if (++sc->next_port > sc->end_port) {
 		/* Disable writer event. */
 		sc->ev.events = EPOLLIN;
@@ -97,14 +117,6 @@ static int writer(struct scanner *sc)
 
 void scanner_tcp4_init(struct scanner *sc)
 {
-	/* Initialize libnet random number generator. */
-	sc->libnet = libnet_init(LIBNET_RAW4, NULL, NULL);
-	if (sc->libnet == NULL)
-		fatal("libnet_init(3)");
-
-	/* Random number generator. */
-	libnet_seed_prand(sc->libnet);
-
 	sc->reader = reader;
 	sc->writer = writer;
 }
@@ -169,11 +181,6 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 
 void scanner_term(struct scanner *sc)
 {
-	if (sc->libnet != NULL) {
-		libnet_destroy(sc->libnet);
-		sc->libnet = NULL;
-	}
-
 	if (sc->addr != NULL) {
 		freeaddrinfo(sc->addr);
 		sc->addr = NULL;
