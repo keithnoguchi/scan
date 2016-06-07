@@ -8,11 +8,14 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
+#include <ifaddrs.h>
+#include <net/if.h>
 
 #include "utils.h"
 
 const int scanner_default_start_port = 0;
 const int scanner_default_end_port = 65535;
+char *const scanner_default_ifname = NULL;
 
 struct scanner {
 	/* Event manager. */
@@ -25,8 +28,9 @@ struct scanner {
 	/* Reader/writer buffers. */
 	char buf[BUFSIZ];
 
-	/* Destination address info. */
+	/* Source and destination address info. */
 	struct addrinfo hints;
+	struct sockaddr_storage src;
 	struct addrinfo *addr;
 
 	/* Scanning port info. */
@@ -187,7 +191,7 @@ tcp4_checksum (struct ip *iphdr, struct tcphdr tcphdr)
 
 static int writer(struct scanner *sc)
 {
-	struct sockaddr_in *sin = (struct sockaddr_in *) sc->addr->ai_addr;
+	struct sockaddr_in *sin;
 	size_t len = sizeof(struct iphdr) + sizeof(struct tcphdr);
 	struct tcphdr *tcp;
 	struct iphdr *ip;
@@ -206,7 +210,10 @@ static int writer(struct scanner *sc)
 	ip->ttl = 255;
 	ip->protocol = IPPROTO_TCP;
 	ip->check = 0;
-	ip->saddr = ip->daddr = sin->sin_addr.s_addr;
+	sin = (struct sockaddr_in *) &sc->src;
+	ip->saddr = sin->sin_addr.s_addr;
+	sin = (struct sockaddr_in *) sc->addr->ai_addr;
+	ip->daddr = sin->sin_addr.s_addr;
 
 	/* TCP header. */
 	tcp = (struct tcphdr *)(sc->buf + 20);
@@ -250,8 +257,33 @@ void scanner_tcp4_init(struct scanner *sc)
 	sc->writer = writer;
 }
 
+static int srcaddr(struct scanner *sc, const char *ifname)
+{
+	struct ifaddrs *addrs, *ifa;
+	int ret;
+
+	ret = getifaddrs(&addrs);
+	if (ret != 0)
+		return ret;
+
+	for (ifa = addrs; ifa != NULL; ifa = ifa->ifa_next)
+		if (ifa->ifa_addr->sa_family == sc->addr->ai_family)
+			if (ifname == NULL || !strcmp(ifa->ifa_name, ifname))
+				if (ifa->ifa_flags & IFF_UP
+					&& !(ifa->ifa_flags & IFF_LOOPBACK))
+					if (ifa->ifa_addr)
+						memcpy(&sc->src,
+							ifa->ifa_addr,
+							sc->addr->ai_addrlen);
+
+	freeifaddrs(addrs);
+
+	return ret;
+}
+
 void scanner_init(struct scanner *sc, const char *name, int family,
-		int proto, const int start_port, const int end_port)
+		int proto, const int start_port, const int end_port,
+		const char *ifname)
 {
 	int ret;
 
@@ -268,7 +300,7 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 	if (sc->rawfd == -1)
 		fatal("socket(2)");
 
-	/* Address info for the host. */
+	/* Source and destination addresses.  */
 	memset(&sc->hints, 0, sizeof(sc->hints));
 	sc->hints.ai_family = family;
 	sc->hints.ai_socktype = SOCK_RAW;
@@ -278,6 +310,9 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 	ret = getaddrinfo(name, NULL, &sc->hints, &sc->addr);
 	if (ret != 0)
 		fatal("getaddrinfo(3)");
+	ret = srcaddr(sc, ifname);
+	if (ret != 0)
+		fatal("getifaddrs(3)");
 
 	/* Register it to the event manager. */
 	sc->ev.events = EPOLLIN|EPOLLOUT;
@@ -332,20 +367,25 @@ int main(int argc, char *argv[])
 {
 	int start_port = scanner_default_start_port;
 	int end_port = scanner_default_end_port;
+	char *ifname = scanner_default_ifname;
 	struct scanner sc;
+	char *dstname;
 
 	if (argc < 2) {
 		printf("Usage: %s <hostname>\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
+	dstname = argv[1];
 	if (argc >= 3) {
 		start_port = end_port = atoi(argv[2]);
 	}
+	if (argc >= 4)
+		ifname = argv[3];
 
 	/* Initialize the scanner with the hostname, address family,
 	 * and the protocol. */
-	scanner_init(&sc, argv[1], PF_INET, IPPROTO_TCP, start_port,
-			end_port);
+	scanner_init(&sc, dstname, PF_INET, IPPROTO_TCP, start_port,
+			end_port, ifname);
 
 	/* Light the fire! */
 	while (scanner_wait(&sc))
