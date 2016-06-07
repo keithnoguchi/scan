@@ -11,6 +11,9 @@
 
 #include "utils.h"
 
+const int scanner_default_start_port = 0;
+const int scanner_default_end_port = 65535;
+
 struct scanner {
 	/* Event manager. */
 	struct epoll_event ev;
@@ -96,7 +99,7 @@ unsigned short checksum(unsigned short *buf, int nwords)
 
 // Build IPv4 TCP pseudo-header and call checksum function.
 uint16_t
-tcp4_checksum (struct ip* iphdr, struct tcphdr tcphdr)
+tcp4_checksum (struct ip *iphdr, struct tcphdr tcphdr)
 {
   uint16_t svalue;
   char buf[IP_MAXPACKET], cvalue;
@@ -204,7 +207,6 @@ static int writer(struct scanner *sc)
 	ip->protocol = IPPROTO_TCP;
 	ip->check = 0;
 	ip->saddr = ip->daddr = sin->sin_addr.s_addr;
-	ip->check = 0;
 
 	/* TCP header. */
 	tcp = (struct tcphdr *)(sc->buf + 20);
@@ -328,13 +330,16 @@ void scanner_term(struct scanner *sc)
 
 int main(int argc, char *argv[])
 {
-	const int start_port = 0;
-	const int end_port = 65535;
+	int start_port = scanner_default_start_port;
+	int end_port = scanner_default_end_port;
 	struct scanner sc;
 
 	if (argc < 2) {
 		printf("Usage: %s <hostname>\n", argv[0]);
 		exit(EXIT_FAILURE);
+	}
+	if (argc >= 3) {
+		start_port = end_port = atoi(argv[2]);
 	}
 
 	/* Initialize the scanner with the hostname, address family,
