@@ -117,67 +117,21 @@ static unsigned short tcp4_checksum(struct iphdr *ip, struct tcphdr *tcp)
 		.protocol = ip->protocol,
 		.length = htons(20)
 	};
-	uint16_t svalue;
-	char buf[IP_MAXPACKET], cvalue;
+	char buf[IP_MAXPACKET];
+	int chksumlen;
 	char *ptr;
-	int chksumlen = 0;
 
 	// ptr points to beginning of buffer buf
 	ptr = &buf[0];
 
 	memcpy(ptr, &iptmp, sizeof(iptmp));
 	ptr += sizeof(iptmp);
-	chksumlen += sizeof(iptmp);
+	chksumlen = sizeof(iptmp);
 
-  // Copy TCP source port to buf (16 bits)
-  memcpy (ptr, &tcp->th_sport, sizeof (tcp->th_sport));
-  ptr += sizeof (tcp->th_sport);
-  chksumlen += sizeof (tcp->th_sport);
+	memcpy(ptr, tcp, sizeof(*tcp));
+	chksumlen += sizeof(*tcp);
 
-  // Copy TCP destination port to buf (16 bits)
-  memcpy (ptr, &tcp->th_dport, sizeof (tcp->th_dport));
-  ptr += sizeof (tcp->th_dport);
-  chksumlen += sizeof (tcp->th_dport);
-
-  // Copy sequence number to buf (32 bits)
-  memcpy (ptr, &tcp->th_seq, sizeof (tcp->th_seq));
-  ptr += sizeof (tcp->th_seq);
-  chksumlen += sizeof (tcp->th_seq);
-
-  // Copy acknowledgement number to buf (32 bits)
-  memcpy (ptr, &tcp->th_ack, sizeof (tcp->th_ack));
-  ptr += sizeof (tcp->th_ack);
-  chksumlen += sizeof (tcp->th_ack);
-
-  // Copy data offset to buf (4 bits) and
-  // copy reserved bits to buf (4 bits)
-  cvalue = (tcp->th_off << 4) + tcp->th_x2;
-  memcpy (ptr, &cvalue, sizeof (cvalue));
-  ptr += sizeof (cvalue);
-  chksumlen += sizeof (cvalue);
-
-  // Copy TCP flags to buf (8 bits)
-  memcpy (ptr, &tcp->th_flags, sizeof (tcp->th_flags));
-  ptr += sizeof (tcp->th_flags);
-  chksumlen += sizeof (tcp->th_flags);
-
-  // Copy TCP window size to buf (16 bits)
-  memcpy (ptr, &tcp->th_win, sizeof (tcp->th_win));
-  ptr += sizeof (tcp->th_win);
-  chksumlen += sizeof (tcp->th_win);
-
-  // Copy TCP checksum to buf (16 bits)
-  // Zero, since we don't know it yet
-  *ptr = 0; ptr++;
-  *ptr = 0; ptr++;
-  chksumlen += 2;
-
-  // Copy urgent pointer to buf (16 bits)
-  memcpy (ptr, &tcp->th_urp, sizeof (tcp->th_urp));
-  ptr += sizeof (tcp->th_urp);
-  chksumlen += sizeof (tcp->th_urp);
-
-  return checksum ((uint16_t *) buf, chksumlen);
+	return checksum ((uint16_t *) buf, chksumlen);
 }
 
 static int writer(struct scanner *sc)
