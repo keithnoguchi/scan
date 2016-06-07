@@ -62,7 +62,6 @@ static int __writer(struct scanner *sc)
 
 int init(struct scanner *sc, int family, int proto)
 {
-	struct epoll_event ev;
 	int ret;
 
 	sc->eventfd = epoll_create1(0);
@@ -81,10 +80,10 @@ int init(struct scanner *sc, int family, int proto)
 	sc->writer = __writer;
 
 	/* Register it to the event manager. */
-	ev.events = EPOLLIN|EPOLLOUT;
-	ev.data.fd = sc->rawfd;
-	ev.data.ptr = (void *)sc;
-	ret = epoll_ctl(sc->eventfd, EPOLL_CTL_ADD, sc->rawfd, &ev);
+	sc->ev.events = EPOLLIN|EPOLLOUT;
+	sc->ev.data.fd = sc->rawfd;
+	sc->ev.data.ptr = (void *)sc;
+	ret = epoll_ctl(sc->eventfd, EPOLL_CTL_ADD, sc->rawfd, &sc->ev);
 	if (ret == -1)
 		fatal("epoll_ctl(2)");
 
