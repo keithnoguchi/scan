@@ -1,5 +1,6 @@
 CFLAGS = -I.
 TARGET = scanner
+DEPS = utils.h scanner.h
 
 .PHONY: all scanner clean
 all: $(TARGET)
