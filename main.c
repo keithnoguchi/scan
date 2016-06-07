@@ -115,18 +115,16 @@ static unsigned short tcp4_checksum(struct scanner *sc, struct iphdr *ip,
 		u_int8_t protocol;
 		u_int16_t length;
 		struct tcphdr tcp;
-	} iptmp = {
-		.saddr = ip->saddr,
-		.daddr = ip->daddr,
-		.buf = 0,
-		.protocol = ip->protocol,
-		.length = htons(20),
-		.tcp = *tcp
-	};
+	} *tmp = (struct iptmp *) sc->cbuf;
 
-	memcpy(sc->cbuf, &iptmp, sizeof(iptmp));
+	tmp->saddr = ip->saddr;
+	tmp->daddr = ip->daddr;
+	tmp->buf = 0;
+	tmp->protocol = ip->protocol;
+	tmp->length = htons(20);
+	tmp->tcp = *tcp;
 
-	return checksum((uint16_t *) sc->cbuf, sizeof(iptmp));
+	return checksum((uint16_t *) sc->cbuf, sizeof(*tmp));
 }
 
 static int writer(struct scanner *sc)
