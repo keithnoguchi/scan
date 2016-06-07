@@ -36,6 +36,7 @@ struct scanner {
 	int (*writer)(struct scanner *sc);
 };
 
+/* Inlines. */
 static inline void scanner_reader(struct scanner *sc)
 {
 	if (sc->reader)
@@ -47,5 +48,25 @@ static inline void scanner_writer(struct scanner *sc)
 	if (sc->writer)
 		(*sc->writer)(sc);
 }
+
+static inline unsigned short checksum(unsigned short *buf, int nwords)
+{
+	unsigned long sum;
+
+	for (sum = 0; nwords > 0; nwords--)
+		sum += *buf++;
+	sum = (sum >> 16) + (sum & 0xffff);
+	sum += (sum >> 16);
+
+	return (unsigned short)(~sum);
+}
+
+/* Prototypes. */
+int scanner_wait(struct scanner *sc);
+void scanner_exec(struct scanner *sc);
+void scanner_init(struct scanner *sc, const char *name, int family,
+		int proto, const int start_port, const int end_port,
+		const char *ifname);
+void scanner_term(struct scanner *sc);
 
 #endif /* _SCANNER_H */
