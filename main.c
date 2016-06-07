@@ -15,10 +15,6 @@ struct scanner {
 	int eventfd;
 	int rawfd;
 
-	/* Address family and the protocol. */
-	int family;
-	int proto;
-
 	/* Scanning port info. */
 	int next_port;
 	int start_port;
@@ -70,9 +66,7 @@ int init(struct scanner *sc, int family, int proto)
 	if (sc->eventfd == -1)
 		fatal("epoll_create1(2)");
 
-	sc->family = family;
-	sc->proto = proto;
-	sc->rawfd = socket(sc->family, SOCK_RAW, sc->proto);
+	sc->rawfd = socket(family, SOCK_RAW, proto);
 	if (sc->rawfd == -1)
 		fatal("socket(2)");
 
