@@ -110,26 +110,20 @@ static unsigned short tcp4_checksum(struct iphdr *ip, struct tcphdr *tcp)
 		u_int8_t buf;
 		u_int8_t protocol;
 		u_int16_t length;
+		struct tcphdr tcp;
 	} iptmp = {
 		.saddr = ip->saddr,
 		.daddr = ip->daddr,
 		.buf = 0,
 		.protocol = ip->protocol,
-		.length = htons(20)
+		.length = htons(20),
+		.tcp = *tcp
 	};
 	char buf[IP_MAXPACKET];
 	int chksumlen;
-	char *ptr;
 
-	// ptr points to beginning of buffer buf
-	ptr = &buf[0];
-
-	memcpy(ptr, &iptmp, sizeof(iptmp));
-	ptr += sizeof(iptmp);
+	memcpy(buf, &iptmp, sizeof(iptmp));
 	chksumlen = sizeof(iptmp);
-
-	memcpy(ptr, tcp, sizeof(*tcp));
-	chksumlen += sizeof(*tcp);
 
 	return checksum ((uint16_t *) buf, chksumlen);
 }
