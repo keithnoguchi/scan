@@ -89,6 +89,8 @@ static int reader(struct scanner *sc)
 static int writer(struct scanner *sc)
 {
 	unsigned char *buf;
+	size_t len;
+	int ret;
 
 	printf("Here you go!\n\n\n");
 
@@ -123,7 +125,10 @@ static int writer(struct scanner *sc)
 			sc->ip);
 
 	buf = libnet_getpbuf(sc->libnet, sc->ip);
-	dump(buf, libnet_getpbuf_size(sc->libnet, sc->ip));
+	len = libnet_getpbuf_size(sc->libnet, sc->ip);
+	dump(buf, len);
+
+	ret = send(sc->rawfd, buf, len, 0);
 
 	if (++sc->next_port > sc->end_port) {
 		/* Disable writer event. */
