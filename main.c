@@ -77,7 +77,7 @@ static int reader(struct scanner *sc)
 	if (ret < 0)
 		fatal("recv(3)");
 
-	printf("Reading!\n\n\n");
+	printf("->\n");
 	dump(sc->buf, ret);
 
 	return ret;
@@ -102,7 +102,7 @@ static int writer(struct scanner *sc)
 	struct iphdr *ip;
 	int ret;
 
-	printf("Writing!\n\n\n");
+	printf("<-\n");
 
 	/* IP header. */
 	ip = (struct iphdr *) sc->buf;
