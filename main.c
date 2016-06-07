@@ -9,9 +9,6 @@
 
 #include "utils.h"
 
-static const int start_port = 0;
-static const int end_port = 65535;
-
 struct scanner {
 	/* Event manager. */
 	struct epoll_event ev;
@@ -92,7 +89,7 @@ void scanner_exec(struct scanner *sc)
 }
 
 void scanner_init(struct scanner *sc, const char *name, int family,
-		int proto)
+		int proto, const int start_port, const int end_port)
 {
 	int ret;
 
@@ -155,6 +152,8 @@ void scanner_term(struct scanner *sc)
 
 int main(int argc, char *argv[])
 {
+	const int start_port = 0;
+	const int end_port = 65535;
 	struct scanner sc;
 
 	if (argc < 2) {
@@ -162,14 +161,16 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	/* Initialize the scanner. */
-	scanner_init(&sc, argv[1], AF_INET, IPPROTO_TCP);
+	/* Initialize the scanner with the hostname, address family,
+	 * and the protocol. */
+	scanner_init(&sc, argv[1], AF_INET, IPPROTO_TCP, start_port,
+			end_port);
 
-	/* Event machine. */
+	/* Light the fire! */
 	while (scanner_wait(&sc))
 		scanner_exec(&sc);
 
-	/* Terminate the scanner. */
+	/* Done with the scanning. */
 	scanner_term(&sc);
 
 	exit(EXIT_SUCCESS);
