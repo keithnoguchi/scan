@@ -50,7 +50,7 @@ static int writer(struct scanner *sc)
 {
 	if (++sc->next_port > sc->end_port) {
 		/* Disable writer event. */
-		sc->ev.events &= ~EPOLLOUT;
+		sc->ev.events = EPOLLIN;
 		epoll_ctl(sc->eventfd, EPOLL_CTL_MOD, sc->rawfd, &sc->ev);
 		printf("done with sending\n");
 	}
