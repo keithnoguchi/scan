@@ -5,7 +5,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
+#include <libnet.h>
 #include <netdb.h>
 
 #include "utils.h"
@@ -29,6 +29,11 @@ struct scanner {
 	int next_port;
 	int start_port;
 	int end_port;
+
+	/* Libnet handler for packat encoding/decoding. */
+	libnet_ptag_t tcp, ip;
+	char errbuf[LIBNET_ERRBUF_SIZE];
+	libnet_t *libnet;
 
 	/* Reader and writer of the raw socket. */
 	int (*reader)(struct scanner *sc);
@@ -74,7 +79,7 @@ static int reader(struct scanner *sc)
 
 	ret = recv(sc->rawfd, sc->buf, sizeof(sc->buf), 0);
 	if (ret < 0)
-		fatal("tcp4_reader.recv(3)");
+		fatal("recv(3)");
 
 	dump(sc->buf, ret);
 
@@ -83,28 +88,42 @@ static int reader(struct scanner *sc)
 
 static int writer(struct scanner *sc)
 {
-	struct sockaddr_in *sin
-		= (struct sockaddr_in *) sc->addr->ai_addr;
-	struct iphdr *ip = (struct iphdr *) sc->buf;
-	int ret;
+	unsigned char *buf;
+
+	printf("Here you go!\n\n\n");
+
+	/* TCP header. */
+	libnet_build_tcp(libnet_get_prand(LIBNET_PRu16),           /* sp */
+			sc->next_port,                             /* dp */
+			libnet_get_prand(LIBNET_PRu32),            /* seq */
+			libnet_get_prand(LIBNET_PRu32),            /* ack */
+			TH_SYN,                                    /* ctrl */
+			libnet_get_prand(LIBNET_PRu16),            /* win */
+			0,                                         /* sum */
+			0,                                         /* urg */
+			LIBNET_TCP_H,                              /* len */
+			NULL,                                      /* data */
+			0,                                         /* dlen */
+			sc->libnet,
+			sc->tcp);
 
 	/* IP header. */
-	ip->ihl = 5;
-	ip->version = IPVERSION;
-	ip->tos = 16;
-	ip->tot_len = sizeof(struct iphdr);
-	ip->id = htons(54321);
-	ip->ttl = 64;
-	ip->protocol = IPPROTO_TCP;
-	ip->check = 0;
-	ip->saddr = 0;
-	ip->daddr = sin->sin_addr.s_addr;
+	libnet_build_ipv4(LIBNET_IPV4_H + LIBNET_TCP_H,            /* len */
+			IPTOS_LOWDELAY,                            /* tos */
+			libnet_get_prand(LIBNET_PRu16),            /* id */
+			0,                                         /* frag */
+			libnet_get_prand(LIBNET_PR8),              /* ttl */
+			IPPROTO_TCP,                               /* proto */
+			0,                                         /* sum */
+			libnet_get_prand(LIBNET_PRu32),            /* sa */
+			libnet_get_prand(LIBNET_PRu32),            /* da */
+			libnet_getpbuf(sc->libnet, sc->tcp),       /* data */
+			libnet_getpbuf_size(sc->libnet, sc->tcp),  /* dlen */
+			sc->libnet,
+			sc->ip);
 
-	dump(sc->buf, 20);
-
-	ret = send(sc->rawfd, sc->buf, 20, 0);
-	if (ret != 20)
-		fatal("tcp4_writer.send(3)");
+	buf = libnet_getpbuf(sc->libnet, sc->ip);
+	dump(buf, libnet_getpbuf_size(sc->libnet, sc->ip));
 
 	if (++sc->next_port > sc->end_port) {
 		/* Disable writer event. */
@@ -117,6 +136,44 @@ static int writer(struct scanner *sc)
 
 void scanner_tcp4_init(struct scanner *sc)
 {
+	/* Initialize libnet random number generator. */
+	sc->libnet = libnet_init(LIBNET_RAW4, NULL, sc->errbuf);
+	if (sc->libnet == NULL)
+		fatal("libnet_init(3)");
+
+	/* Random number generator. */
+	libnet_seed_prand(sc->libnet);
+
+	/* TCP header. */
+	sc->tcp = libnet_build_tcp(libnet_get_prand(LIBNET_PRu16), /* sp */
+			sc->next_port,                             /* dp */
+			libnet_get_prand(LIBNET_PRu32),            /* seq */
+			libnet_get_prand(LIBNET_PRu32),            /* ack */
+			TH_SYN,                                    /* ctrl */
+			libnet_get_prand(LIBNET_PRu16),            /* win */
+			0,                                         /* sum */
+			0,                                         /* urg */
+			LIBNET_TCP_H,                              /* len */
+			NULL,                                      /* data */
+			0,                                         /* dlen */
+			sc->libnet,
+			0);
+
+	/* IP header. */
+	sc->ip = libnet_build_ipv4(LIBNET_IPV4_H + LIBNET_TCP_H,   /* len */
+			IPTOS_LOWDELAY,                            /* tos */
+			libnet_get_prand(LIBNET_PRu16),            /* id */
+			0,                                         /* frag */
+			libnet_get_prand(LIBNET_PR8),              /* ttl */
+			IPPROTO_TCP,                               /* proto */
+			0,                                         /* sum */
+			libnet_get_prand(LIBNET_PRu32),            /* sa */
+			libnet_get_prand(LIBNET_PRu32),            /* da */
+			libnet_getpbuf(sc->libnet, sc->tcp),       /* data */
+			libnet_getpbuf_size(sc->libnet, sc->tcp),  /* dlen */
+			sc->libnet,
+			0);
+
 	sc->reader = reader;
 	sc->writer = writer;
 }
@@ -181,6 +238,12 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 
 void scanner_term(struct scanner *sc)
 {
+	if (sc->libnet != NULL) {
+		libnet_clear_packet(sc->libnet);
+		libnet_destroy(sc->libnet);
+		sc->libnet = NULL;
+	}
+
 	if (sc->addr != NULL) {
 		freeaddrinfo(sc->addr);
 		sc->addr = NULL;
