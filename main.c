@@ -134,19 +134,7 @@ static int writer(struct scanner *sc)
 
 	/* IP header. */
 	ip = (struct iphdr *) sc->obuf;
-	ip->ihl = 5;
-	ip->version = 4;
-	ip->tos = 0;
-	ip->tot_len = 0;
-	ip->id = htonl(54321);
-	ip->frag_off = 0;
-	ip->ttl = 255;
-	ip->protocol = IPPROTO_TCP;
-	ip->check = 0;
-	sin = (struct sockaddr_in *) &sc->src;
-	ip->saddr = sin->sin_addr.s_addr;
-	sin = (struct sockaddr_in *) sc->dst->ai_addr;
-	ip->daddr = sin->sin_addr.s_addr;
+	ip->id = htonl(54321); /* randomize. */
 
 	/* TCP header. */
 	tcp = (struct tcphdr *)(sc->obuf + 20);
@@ -199,7 +187,6 @@ void scanner_tcp4_init(struct scanner *sc)
 	ip->version = 4;
 	ip->tos = 0;
 	ip->tot_len = 0;
-	ip->id = htonl(54321);
 	ip->frag_off = 0;
 	ip->ttl = 255;
 	ip->protocol = IPPROTO_TCP;
