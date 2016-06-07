@@ -18,6 +18,9 @@ struct scanner {
 	int eventfd;
 	int rawfd;
 
+	/* Reader/writer buffers. */
+	char buf[BUFSIZ];
+
 	/* Scanning port info. */
 	int next_port;
 	int start_port;
@@ -42,11 +45,11 @@ static inline void scanner_writer(struct scanner *sc)
 
 static int reader(struct scanner *sc)
 {
-	char buf[BUFSIZ];
 	int ret;
 
-	ret = recv(sc->rawfd, buf, sizeof(buf), 0);
+	ret = recv(sc->rawfd, sc->buf, sizeof(sc->buf), 0);
 	printf("%d = recv\n", ret);
+
 	return ret;
 }
 
