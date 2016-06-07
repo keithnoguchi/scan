@@ -104,38 +104,30 @@ static unsigned short checksum(unsigned short *buf, int nwords)
 
 static unsigned short tcp4_checksum(struct iphdr *ip, struct tcphdr *tcp)
 {
-  uint16_t svalue;
-  char buf[IP_MAXPACKET], cvalue;
-  char *ptr;
-  int chksumlen = 0;
+	struct iptmp {
+		u_int32_t saddr;
+		u_int32_t daddr;
+		u_int8_t buf;
+		u_int8_t protocol;
+		u_int16_t length;
+	} iptmp = {
+		.saddr = ip->saddr,
+		.daddr = ip->daddr,
+		.buf = 0,
+		.protocol = ip->protocol,
+		.length = htons(20)
+	};
+	uint16_t svalue;
+	char buf[IP_MAXPACKET], cvalue;
+	char *ptr;
+	int chksumlen = 0;
 
-  // ptr points to beginning of buffer buf
-  ptr = &buf[0];
+	// ptr points to beginning of buffer buf
+	ptr = &buf[0];
 
-  // Copy source IP address into buf (32 bits)
-  memcpy (ptr, &ip->saddr, sizeof (ip->saddr));
-  ptr += sizeof (ip->saddr);
-  chksumlen += sizeof (ip->saddr);
-
-  // Copy destination IP address into buf (32 bits)
-  memcpy (ptr, &ip->daddr, sizeof (ip->daddr));
-  ptr += sizeof (ip->daddr);
-  chksumlen += sizeof (ip->daddr);
-
-  // Copy zero field to buf (8 bits)
-  *ptr = 0; ptr++;
-  chksumlen += 1;
-
-  // Copy transport layer protocol to buf (8 bits)
-  memcpy (ptr, &ip->protocol, sizeof (ip->protocol));
-  ptr += sizeof (ip->protocol);
-  chksumlen += sizeof (ip->protocol);
-
-  // Copy TCP length to buf (16 bits)
-  svalue = htons (sizeof (*tcp));
-  memcpy (ptr, &svalue, sizeof (svalue));
-  ptr += sizeof (svalue);
-  chksumlen += sizeof (svalue);
+	memcpy(ptr, &iptmp, sizeof(iptmp));
+	ptr += sizeof(iptmp);
+	chksumlen += sizeof(iptmp);
 
   // Copy TCP source port to buf (16 bits)
   memcpy (ptr, &tcp->th_sport, sizeof (tcp->th_sport));
