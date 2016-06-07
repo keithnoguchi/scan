@@ -28,6 +28,7 @@ struct scanner {
 	/* Read/write buffers. */
 	char ibuf[BUFSIZ];
 	char obuf[BUFSIZ];
+	size_t olen;
 
 	/* Source and destination addresses. */
 	struct addrinfo hints;
@@ -124,7 +125,6 @@ static unsigned short tcp4_checksum(struct scanner *sc, struct tcphdr *tcp)
 static int writer(struct scanner *sc)
 {
 	struct sockaddr_in *sin;
-	size_t len = sizeof(struct iphdr) + sizeof(struct tcphdr);
 	struct tcphdr *tcp;
 	struct iphdr *ip;
 	int ret;
@@ -149,11 +149,11 @@ static int writer(struct scanner *sc)
 	tcp->th_urp = 0;
 	tcp->th_sum = tcp4_checksum(sc, tcp);
 
-	dump(sc->obuf, len);
+	dump(sc->obuf, sc->olen);
 
-	ret = sendto(sc->rawfd, sc->obuf, len, 0, sc->dst->ai_addr,
+	ret = sendto(sc->rawfd, sc->obuf, sc->olen, 0, sc->dst->ai_addr,
 			sc->dst->ai_addrlen);
-	if (ret != len)
+	if (ret != sc->olen)
 		fatal("sendto()");
 
 	if (++sc->next_port > sc->end_port) {
@@ -168,8 +168,8 @@ static int writer(struct scanner *sc)
 
 void scanner_tcp4_init(struct scanner *sc)
 {
-	struct iphdr *ip = (struct iphdr *) sc->obuf;
 	struct sockaddr_in *sin;
+	struct iphdr *ip;
 	int on = 1;
 	int ret;
 
@@ -195,6 +195,9 @@ void scanner_tcp4_init(struct scanner *sc)
 	ip->saddr = sin->sin_addr.s_addr;
 	sin = (struct sockaddr_in *) sc->dst->ai_addr;
 	ip->daddr = sin->sin_addr.s_addr;
+
+	/* We only send TCP/IP header portion. */
+	sc->olen = sizeof(struct iphdr) + sizeof(struct tcphdr);
 
 	/* Prepare the checksum buffer. */
 	struct iptmp {
