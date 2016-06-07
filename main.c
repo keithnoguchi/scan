@@ -35,6 +35,7 @@ static int __writer(struct scanner *sc)
 
 		ev.events = EPOLLIN;
 		ev.data.fd = sc->fd;
+		ev.data.ptr = (void *)sc;
 		epoll_ctl(sc->eventfd, EPOLL_CTL_MOD, sc->fd, &ev);
 		printf("done with sending\n");
 	}
