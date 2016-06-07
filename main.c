@@ -144,6 +144,8 @@ static int writer(struct scanner *sc)
 
 void scanner_tcp4_init(struct scanner *sc)
 {
+	struct sockaddr_in *sin = (struct sockaddr_in *) sc->addr->ai_addr;
+
 	/* Initialize libnet random number generator. */
 	sc->libnet = libnet_init(LIBNET_RAW4, NULL, sc->errbuf);
 	if (sc->libnet == NULL)
@@ -176,7 +178,7 @@ void scanner_tcp4_init(struct scanner *sc)
 			IPPROTO_TCP,                               /* proto */
 			0,                                         /* sum */
 			libnet_get_prand(LIBNET_PRu32),            /* sa */
-			libnet_get_prand(LIBNET_PRu32),            /* da */
+			sin->sin_addr.s_addr,                      /* da */
 			libnet_getpbuf(sc->libnet, sc->tcp),       /* data */
 			libnet_getpbuf_size(sc->libnet, sc->tcp),  /* dlen */
 			sc->libnet,
