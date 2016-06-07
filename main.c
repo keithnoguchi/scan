@@ -23,11 +23,7 @@ void init(struct scanner *sc, int eventfd, int family, int proto)
 
 	sc->family = family;
 	sc->protocol = proto;
-	if (proto == IPPROTO_TCP)
-		sc->type = SOCK_STREAM;
-	else
-		sc->type = SOCK_DGRAM;
-	sc->fd = socket(sc->family, sc->type, sc->protocol);
+	sc->fd = socket(sc->family, SOCK_RAW, sc->protocol);
 	if (sc->fd == -1)
 		fatal("socket(2)");
 
@@ -38,7 +34,7 @@ void init(struct scanner *sc, int eventfd, int family, int proto)
 	/* Register to the event manager. */
 	ev.events = EPOLLIN|EPOLLOUT;
 	ev.data.fd = sc->fd;
-	ev.data.ptr = (void *)&sc;
+	ev.data.ptr = (void *)sc;
 	ret = epoll_ctl(eventfd, EPOLL_CTL_ADD, sc->fd, &ev);
 	if (ret == -1)
 		fatal("epoll_ctl(2)");
