@@ -115,14 +115,15 @@ void scanner_init(struct scanner *sc, int family, int proto)
 
 void scanner_term(struct scanner *sc)
 {
-	if (sc->eventfd == -1)
-		return;
-
 	if (sc->rawfd != -1) {
-		epoll_ctl(sc->eventfd, EPOLL_CTL_DEL, sc->rawfd, NULL);
+		if (sc->eventfd != -1)
+			epoll_ctl(sc->eventfd, EPOLL_CTL_DEL,
+					sc->rawfd, NULL);
 		close(sc->rawfd);
 	}
-	close(sc->eventfd);
+	if (sc->eventfd != -1) {
+		close(sc->eventfd);
+	}
 	sc->eventfd = sc->rawfd = -1;
 }
 
