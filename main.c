@@ -28,25 +28,25 @@ struct scanner {
 	int (*writer)(struct scanner *sc);
 };
 
-static inline void reader(struct scanner *sc)
+static inline void scanner_reader(struct scanner *sc)
 {
 	if (sc->reader)
 		(*sc->reader)(sc);
 }
 
-static inline void writer(struct scanner *sc)
+static inline void scanner_writer(struct scanner *sc)
 {
 	if (sc->writer)
 		(*sc->writer)(sc);
 }
 
-static int __reader(struct scanner *sc)
+static int reader(struct scanner *sc)
 {
 	printf("reader\n");
 	return 0;
 }
 
-static int __writer(struct scanner *sc)
+static int writer(struct scanner *sc)
 {
 	if (++sc->next_port > sc->end_port) {
 		struct epoll_event ev;
@@ -60,7 +60,28 @@ static int __writer(struct scanner *sc)
 	return 0;
 }
 
-int init(struct scanner *sc, int family, int proto)
+int scanner_wait(struct scanner *sc)
+{
+	int nfds;
+
+	nfds = epoll_wait(sc->eventfd, &sc->ev, 1, -1);
+	if (nfds == -1)
+		fatal("epoll_wait(2)");
+
+	return 1;
+}
+
+void scanner_exec(struct scanner *sc)
+{
+	struct scanner *scp = (struct scanner *) sc->ev.data.ptr;
+
+	if (sc->ev.events & EPOLLIN)
+		scanner_reader(scp);
+	if (sc->ev.events & EPOLLOUT)
+		scanner_writer(scp);
+}
+
+void scanner_init(struct scanner *sc, int family, int proto)
 {
 	int ret;
 
@@ -76,8 +97,8 @@ int init(struct scanner *sc, int family, int proto)
 	sc->start_port = start_port;
 	sc->end_port = end_port;
 	sc->next_port = sc->start_port;
-	sc->reader = __reader;
-	sc->writer = __writer;
+	sc->reader = reader;
+	sc->writer = writer;
 
 	/* Register it to the event manager. */
 	sc->ev.events = EPOLLIN|EPOLLOUT;
@@ -86,11 +107,9 @@ int init(struct scanner *sc, int family, int proto)
 	ret = epoll_ctl(sc->eventfd, EPOLL_CTL_ADD, sc->rawfd, &sc->ev);
 	if (ret == -1)
 		fatal("epoll_ctl(2)");
-
-	return sc->eventfd;
 }
 
-void term(struct scanner *sc)
+void scanner_term(struct scanner *sc)
 {
 	if (sc->eventfd == -1)
 		return;
@@ -106,26 +125,16 @@ void term(struct scanner *sc)
 int main(int argc, char *argv[])
 {
 	struct scanner sc;
-	int eventfd;
 
-	/* Initialize scanner. */
-	eventfd = init(&sc, AF_INET, IPPROTO_TCP);
+	/* Initialize the scanner. */
+	scanner_init(&sc, AF_INET, IPPROTO_TCP);
 
-	for (;;) {
-		struct scanner *scp;
-		int nfds;
+	/* Event machine. */
+	while (scanner_wait(&sc))
+		scanner_exec(&sc);
 
-		nfds = epoll_wait(eventfd, &sc.ev, 1, -1);
-		if (nfds == -1)
-			fatal("epoll_wait(2)");
-
-		scp = (struct scanner *) sc.ev.data.ptr;
-		if (sc.ev.events & EPOLLIN)
-			reader(scp);
-		if (sc.ev.events & EPOLLOUT)
-			writer(scp);
-	}
-	term(&sc);
+	/* Terminate the scanner. */
+	scanner_term(&sc);
 
 	exit(EXIT_SUCCESS);
 }
