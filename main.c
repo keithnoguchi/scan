@@ -26,7 +26,8 @@ struct scanner {
 	int rawfd;
 
 	/* Read/write buffers. */
-	char buf[BUFSIZ];
+	char ibuf[BUFSIZ];
+	char obuf[BUFSIZ];
 
 	/* Source and destination addresses. */
 	struct addrinfo hints;
@@ -83,12 +84,12 @@ static int reader(struct scanner *sc)
 {
 	int ret;
 
-	ret = recv(sc->rawfd, sc->buf, sizeof(sc->buf), 0);
+	ret = recv(sc->rawfd, sc->ibuf, sizeof(sc->ibuf), 0);
 	if (ret < 0)
 		fatal("recv(3)");
 
 	printf("->\n");
-	dump(sc->buf, ret);
+	dump(sc->ibuf, ret);
 
 	return ret;
 }
@@ -116,12 +117,6 @@ static unsigned short tcp4_checksum(struct scanner *sc, struct iphdr *ip,
 		u_int16_t length;
 		struct tcphdr tcp;
 	} *tmp = (struct iptmp *) sc->cbuf;
-
-	tmp->saddr = ip->saddr;
-	tmp->daddr = ip->daddr;
-	tmp->buf = 0;
-	tmp->protocol = ip->protocol;
-	tmp->length = htons(20);
 	tmp->tcp = *tcp;
 
 	return checksum((uint16_t *) sc->cbuf, sizeof(*tmp));
@@ -138,7 +133,7 @@ static int writer(struct scanner *sc)
 	printf("<-\n");
 
 	/* IP header. */
-	ip = (struct iphdr *) sc->buf;
+	ip = (struct iphdr *) sc->obuf;
 	ip->ihl = 5;
 	ip->version = 4;
 	ip->tos = 0;
@@ -154,7 +149,7 @@ static int writer(struct scanner *sc)
 	ip->daddr = sin->sin_addr.s_addr;
 
 	/* TCP header. */
-	tcp = (struct tcphdr *)(sc->buf + 20);
+	tcp = (struct tcphdr *)(sc->obuf + 20);
 	tcp->th_sport = 0;
 	tcp->th_dport = htons(sc->next_port);
 	tcp->th_seq = 0;
@@ -167,9 +162,9 @@ static int writer(struct scanner *sc)
 	tcp->th_urp = 0;
 	tcp->th_sum = tcp4_checksum(sc, ip, tcp);
 
-	dump(sc->buf, len);
+	dump(sc->obuf, len);
 
-	ret = sendto(sc->rawfd, sc->buf, len, 0, sc->dst->ai_addr,
+	ret = sendto(sc->rawfd, sc->obuf, len, 0, sc->dst->ai_addr,
 			sc->dst->ai_addrlen);
 	if (ret != len)
 		fatal("sendto()");
@@ -185,14 +180,49 @@ static int writer(struct scanner *sc)
 
 void scanner_tcp4_init(struct scanner *sc)
 {
+	struct iphdr *ip = (struct iphdr *) sc->obuf;
+	struct sockaddr_in *sin;
 	int on = 1;
 	int ret;
 
 	ret = setsockopt(sc->rawfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on));
 	if (ret != 0)
 		fatal("setsockopt(3)");
+
+	/* TCPv4 specific reader/writer. */
 	sc->reader = reader;
 	sc->writer = writer;
+
+	/* Prepare the IP header. */
+	ip = (struct iphdr *) sc->obuf;
+	ip->ihl = 5;
+	ip->version = 4;
+	ip->tos = 0;
+	ip->tot_len = 0;
+	ip->id = htonl(54321);
+	ip->frag_off = 0;
+	ip->ttl = 255;
+	ip->protocol = IPPROTO_TCP;
+	ip->check = 0;
+	sin = (struct sockaddr_in *) &sc->src;
+	ip->saddr = sin->sin_addr.s_addr;
+	sin = (struct sockaddr_in *) sc->dst->ai_addr;
+	ip->daddr = sin->sin_addr.s_addr;
+
+	/* Prepare the checksum buffer. */
+	struct iptmp {
+		u_int32_t saddr;
+		u_int32_t daddr;
+		u_int8_t buf;
+		u_int8_t protocol;
+		u_int16_t length;
+		struct tcphdr tcp;
+	} *tmp = (struct iptmp *) sc->cbuf;
+	tmp->saddr = ip->saddr;
+	tmp->daddr = ip->daddr;
+	tmp->buf = 0;
+	tmp->protocol = ip->protocol;
+	tmp->length = htons(20);
 }
 
 static int srcaddr(struct scanner *sc, const char *ifname)
