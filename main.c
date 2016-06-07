@@ -31,7 +31,7 @@ struct scanner {
 	/* Source and destination address info. */
 	struct addrinfo hints;
 	struct sockaddr_storage src;
-	struct addrinfo *addr;
+	struct addrinfo *dst;
 
 	/* Scanning port info. */
 	int next_port;
@@ -212,7 +212,7 @@ static int writer(struct scanner *sc)
 	ip->check = 0;
 	sin = (struct sockaddr_in *) &sc->src;
 	ip->saddr = sin->sin_addr.s_addr;
-	sin = (struct sockaddr_in *) sc->addr->ai_addr;
+	sin = (struct sockaddr_in *) sc->dst->ai_addr;
 	ip->daddr = sin->sin_addr.s_addr;
 
 	/* TCP header. */
@@ -231,8 +231,8 @@ static int writer(struct scanner *sc)
 
 	dump(sc->buf, len);
 
-	ret = sendto(sc->rawfd, sc->buf, len, 0, sc->addr->ai_addr,
-			sc->addr->ai_addrlen);
+	ret = sendto(sc->rawfd, sc->buf, len, 0, sc->dst->ai_addr,
+			sc->dst->ai_addrlen);
 	if (ret != len)
 		fatal("sendto()");
 
@@ -267,14 +267,14 @@ static int srcaddr(struct scanner *sc, const char *ifname)
 		return ret;
 
 	for (ifa = addrs; ifa != NULL; ifa = ifa->ifa_next)
-		if (ifa->ifa_addr->sa_family == sc->addr->ai_family)
+		if (ifa->ifa_addr->sa_family == sc->dst->ai_family)
 			if (ifname == NULL || !strcmp(ifa->ifa_name, ifname))
 				if (ifa->ifa_flags & IFF_UP
 					&& !(ifa->ifa_flags & IFF_LOOPBACK))
 					if (ifa->ifa_addr)
 						memcpy(&sc->src,
 							ifa->ifa_addr,
-							sc->addr->ai_addrlen);
+							sc->dst->ai_addrlen);
 
 	freeifaddrs(addrs);
 
@@ -307,7 +307,7 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 	sc->hints.ai_protocol = proto;
 	sc->hints.ai_addr = NULL;
 	sc->hints.ai_next = NULL;
-	ret = getaddrinfo(name, NULL, &sc->hints, &sc->addr);
+	ret = getaddrinfo(name, NULL, &sc->hints, &sc->dst);
 	if (ret != 0)
 		fatal("getaddrinfo(3)");
 	ret = srcaddr(sc, ifname);
@@ -345,9 +345,9 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 
 void scanner_term(struct scanner *sc)
 {
-	if (sc->addr != NULL) {
-		freeaddrinfo(sc->addr);
-		sc->addr = NULL;
+	if (sc->dst != NULL) {
+		freeaddrinfo(sc->dst);
+		sc->dst = NULL;
 	}
 
 	if (sc->rawfd != -1) {
@@ -356,9 +356,11 @@ void scanner_term(struct scanner *sc)
 					sc->rawfd, NULL);
 		close(sc->rawfd);
 	}
+
 	if (sc->eventfd != -1) {
 		close(sc->eventfd);
 	}
+
 	memset(sc, 0, sizeof(struct scanner));
 	sc->eventfd = sc->rawfd = -1;
 }
