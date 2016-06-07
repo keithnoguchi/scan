@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netdb.h>
 
 #include "utils.h"
 
@@ -13,13 +15,17 @@ static const int end_port = 65535;
 struct scanner {
 	/* Event manager. */
 	struct epoll_event ev;
-
-	/* Sockets. */
 	int eventfd;
+
+	/* Raw socket for data packets. */
 	int rawfd;
 
 	/* Reader/writer buffers. */
 	char buf[BUFSIZ];
+
+	/* Destination address info. */
+	struct addrinfo hints;
+	struct addrinfo *addr;
 
 	/* Scanning port info. */
 	int next_port;
@@ -85,17 +91,30 @@ void scanner_exec(struct scanner *sc)
 		scanner_writer(scp);
 }
 
-void scanner_init(struct scanner *sc, int family, int proto)
+void scanner_init(struct scanner *sc, const char *name, int family,
+		int proto)
 {
 	int ret;
+
+	memset(sc, 0, sizeof(struct scanner));
+	sc->eventfd = sc->rawfd = -1;
 
 	sc->eventfd = epoll_create1(0);
 	if (sc->eventfd == -1)
 		fatal("epoll_create1(2)");
 
+	/* Create a raw socket. */
 	sc->rawfd = socket(family, SOCK_RAW, proto);
 	if (sc->rawfd == -1)
 		fatal("socket(2)");
+
+	/* Address info hints. */
+	memset(&sc->hints, 0, sizeof(sc->hints));
+	sc->hints.ai_family = family;
+	sc->hints.ai_socktype = SOCK_RAW;
+	sc->hints.ai_protocol = proto;
+	sc->hints.ai_addr = NULL;
+	sc->hints.ai_next = NULL;
 
 	/* We'll set this later. */
 	sc->start_port = start_port;
@@ -115,6 +134,8 @@ void scanner_init(struct scanner *sc, int family, int proto)
 
 void scanner_term(struct scanner *sc)
 {
+	if (sc->addr != NULL)
+		freeaddrinfo(sc->addr);
 	if (sc->rawfd != -1) {
 		if (sc->eventfd != -1)
 			epoll_ctl(sc->eventfd, EPOLL_CTL_DEL,
@@ -124,6 +145,7 @@ void scanner_term(struct scanner *sc)
 	if (sc->eventfd != -1) {
 		close(sc->eventfd);
 	}
+	memset(sc, 0, sizeof(struct scanner));
 	sc->eventfd = sc->rawfd = -1;
 }
 
@@ -131,8 +153,13 @@ int main(int argc, char *argv[])
 {
 	struct scanner sc;
 
+	if (argc < 2) {
+		printf("Usage: %s <hostname>\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
 	/* Initialize the scanner. */
-	scanner_init(&sc, AF_INET, IPPROTO_TCP);
+	scanner_init(&sc, argv[1], AF_INET, IPPROTO_TCP);
 
 	/* Event machine. */
 	while (scanner_wait(&sc))
