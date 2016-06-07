@@ -46,6 +46,27 @@ static inline void scanner_writer(struct scanner *sc)
 		(*sc->writer)(sc);
 }
 
+int scanner_wait(struct scanner *sc)
+{
+	int nfds;
+
+	nfds = epoll_wait(sc->eventfd, &sc->ev, 1, -1);
+	if (nfds == -1)
+		fatal("epoll_wait(2)");
+
+	return 1;
+}
+
+void scanner_exec(struct scanner *sc)
+{
+	struct scanner *scp = (struct scanner *) sc->ev.data.ptr;
+
+	if (sc->ev.events & EPOLLIN)
+		scanner_reader(scp);
+	if (sc->ev.events & EPOLLOUT)
+		scanner_writer(scp);
+}
+
 static int reader(struct scanner *sc)
 {
 	int ret;
@@ -70,25 +91,10 @@ static int writer(struct scanner *sc)
 	return 0;
 }
 
-int scanner_wait(struct scanner *sc)
+void scanner_tcp4_init(struct scanner *sc)
 {
-	int nfds;
-
-	nfds = epoll_wait(sc->eventfd, &sc->ev, 1, -1);
-	if (nfds == -1)
-		fatal("epoll_wait(2)");
-
-	return 1;
-}
-
-void scanner_exec(struct scanner *sc)
-{
-	struct scanner *scp = (struct scanner *) sc->ev.data.ptr;
-
-	if (sc->ev.events & EPOLLIN)
-		scanner_reader(scp);
-	if (sc->ev.events & EPOLLOUT)
-		scanner_writer(scp);
+	sc->reader = reader;
+	sc->writer = writer;
 }
 
 void scanner_init(struct scanner *sc, const char *name, int family,
@@ -132,8 +138,21 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 	sc->start_port = start_port;
 	sc->end_port = end_port;
 	sc->next_port = sc->start_port;
-	sc->reader = reader;
-	sc->writer = writer;
+
+	switch (family) {
+	case PF_INET:
+		if (proto == IPPROTO_TCP)
+			scanner_tcp4_init(sc);
+		else
+			fatal("TCPv4 is only supported\n");
+		break;
+	case PF_INET6:
+		fatal("IPv6 is not supported\n");
+		break;
+	default:
+		fatal("Unsupported protocol family\n");
+		break;
+	 }
 }
 
 void scanner_term(struct scanner *sc)
@@ -166,7 +185,7 @@ int main(int argc, char *argv[])
 
 	/* Initialize the scanner with the hostname, address family,
 	 * and the protocol. */
-	scanner_init(&sc, argv[1], AF_INET, IPPROTO_TCP, start_port,
+	scanner_init(&sc, argv[1], PF_INET, IPPROTO_TCP, start_port,
 			end_port);
 
 	/* Light the fire! */
