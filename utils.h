@@ -22,4 +22,34 @@ static inline void fatal(const char *const fmt, ...)
 	exit(EXIT_FAILURE);
 }
 
+static inline void dump(const unsigned char *const data_buffer,
+		const unsigned int length)
+{
+	unsigned char byte;
+	unsigned int i, j;
+
+	for (i = 0; i < length; ++i) {
+		byte = data_buffer[i];
+		printf("%02x ", data_buffer[i]);
+		if (((i % 16) == 15) || (i == length - 1)) {
+			/* Taking care of the last line case */
+			for (j = 0; j < 15 - (i % 16); ++j)
+				printf("   ");
+
+			/* Separator between binary and the ASCII result */
+			printf("| ");
+
+			/* Print out the ASCII string. */
+			for (j = (i - (i % 16)); j <= i; ++j) {
+				byte = data_buffer[j];
+				if (byte > 31 && byte < 127)
+					printf("%c", byte);
+				else
+					printf(".");
+			}
+			printf("\n");
+		}
+	}
+}
+
 #endif /* !_UTILS_H */

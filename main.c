@@ -51,7 +51,10 @@ static int reader(struct scanner *sc)
 	int ret;
 
 	ret = recv(sc->rawfd, sc->buf, sizeof(sc->buf), 0);
-	printf("%d = recv\n", ret);
+	if (ret < 0)
+		fatal("recv(3)");
+
+	dump(sc->buf, ret);
 
 	return ret;
 }
