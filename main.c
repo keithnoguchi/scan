@@ -40,10 +40,12 @@ void init(struct scanner *sc, int eventfd, int family, int proto)
 		fatal("epoll_ctl(2)");
 }
 
-void term(struct scanner *sc)
+void term(struct scanner *sc, int eventfd)
 {
-	if (sc->fd != -1)
+	if (sc->fd != -1) {
+		epoll_ctl(eventfd, EPOLL_CTL_DEL, sc->fd, NULL);
 		close(sc->fd);
+	}
 	sc->fd = -1;
 }
 
@@ -62,21 +64,21 @@ static inline void writer(struct scanner *sc)
 int main(int argc, char *argv[])
 {
 	struct scanner sc;
-	int fd;
+	int eventfd;
 
-	fd = epoll_create1(0);
-	if (fd == -1)
+	eventfd = epoll_create1(0);
+	if (eventfd == -1)
 		fatal("epoll_create1(2)");
 
 	/* Initialize scanner. */
-	init(&sc, fd, AF_INET, IPPROTO_TCP);
+	init(&sc, eventfd, AF_INET, IPPROTO_TCP);
 
 	for (;;) {
 		struct epoll_event ev;
 		struct scanner *scp;
 		int nfds;
 
-		nfds = epoll_wait(fd, &ev, 1, -1);
+		nfds = epoll_wait(eventfd, &ev, 1, -1);
 		if (nfds == -1)
 			fatal("epoll_wait(2)");
 
@@ -87,8 +89,8 @@ int main(int argc, char *argv[])
 			writer(scp);
 	}
 
-	term(&sc);
-	close(fd);
+	term(&sc, eventfd);
+	close(eventfd);
 
 	exit(EXIT_SUCCESS);
 }
