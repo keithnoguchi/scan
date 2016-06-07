@@ -120,12 +120,10 @@ static unsigned short tcp4_checksum(struct iphdr *ip, struct tcphdr *tcp)
 		.tcp = *tcp
 	};
 	char buf[IP_MAXPACKET];
-	int chksumlen;
 
 	memcpy(buf, &iptmp, sizeof(iptmp));
-	chksumlen = sizeof(iptmp);
 
-	return checksum ((uint16_t *) buf, chksumlen);
+	return checksum((uint16_t *) buf, sizeof(iptmp));
 }
 
 static int writer(struct scanner *sc)
