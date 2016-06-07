@@ -42,8 +42,12 @@ static inline void scanner_writer(struct scanner *sc)
 
 static int reader(struct scanner *sc)
 {
-	printf("reader\n");
-	return 0;
+	char buf[BUFSIZ];
+	int ret;
+
+	ret = recv(sc->rawfd, buf, sizeof(buf), 0);
+	printf("%d = recv\n", ret);
+	return ret;
 }
 
 static int writer(struct scanner *sc)
