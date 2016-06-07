@@ -81,6 +81,7 @@ static int reader(struct scanner *sc)
 	if (ret < 0)
 		fatal("recv(3)");
 
+	printf("Reading!\n\n\n");
 	dump(sc->buf, ret);
 
 	return ret;
@@ -93,7 +94,7 @@ static int writer(struct scanner *sc)
 	size_t len;
 	int ret;
 
-	printf("Here you go!\n\n\n");
+	printf("Writing!\n\n\n");
 
 	/* TCP header. */
 	libnet_build_tcp(libnet_get_prand(LIBNET_PRu16),           /* sp */
@@ -129,9 +130,10 @@ static int writer(struct scanner *sc)
 	len = libnet_getpbuf_size(sc->libnet, sc->ip);
 	dump(buf, len);
 
-	ret = send(sc->rawfd, buf, len, 0);
+	ret = sendto(sc->rawfd, buf, len, 0, sc->addr->ai_addr,
+			sc->addr->ai_addrlen);
 	if (ret != len)
-		fatal("send()");
+		fatal("sendto()");
 
 	if (++sc->next_port > sc->end_port) {
 		/* Disable writer event. */
