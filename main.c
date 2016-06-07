@@ -49,12 +49,9 @@ static int reader(struct scanner *sc)
 static int writer(struct scanner *sc)
 {
 	if (++sc->next_port > sc->end_port) {
-		struct epoll_event ev;
-
-		ev.events = EPOLLIN;
-		ev.data.fd = sc->rawfd;
-		ev.data.ptr = (void *)sc;
-		epoll_ctl(sc->eventfd, EPOLL_CTL_MOD, sc->rawfd, &ev);
+		/* Disable writer event. */
+		sc->ev.events &= ~EPOLLOUT;
+		epoll_ctl(sc->eventfd, EPOLL_CTL_MOD, sc->rawfd, &sc->ev);
 		printf("done with sending\n");
 	}
 	return 0;
