@@ -31,8 +31,8 @@ struct scanner {
 	int end_port;
 
 	/* Libnet handler for packat encoding/decoding. */
-	libnet_ptag_t tcp, ip;
 	char errbuf[LIBNET_ERRBUF_SIZE];
+	libnet_ptag_t tcp;
 	libnet_t *libnet;
 
 	/* Reader and writer of the raw socket. */
@@ -98,7 +98,8 @@ static int writer(struct scanner *sc)
 
 	/* TCP header. */
 	libnet_build_tcp(libnet_get_prand(LIBNET_PRu16),           /* sp */
-			sc->next_port,                             /* dp */
+			22,                             /* dp */
+			//sc->next_port,                             /* dp */
 			libnet_get_prand(LIBNET_PRu32),            /* seq */
 			libnet_get_prand(LIBNET_PRu32),            /* ack */
 			TH_SYN,                                    /* ctrl */
@@ -111,23 +112,8 @@ static int writer(struct scanner *sc)
 			sc->libnet,
 			sc->tcp);
 
-	/* IP header. */
-	libnet_build_ipv4(LIBNET_IPV4_H + LIBNET_TCP_H,            /* len */
-			IPTOS_LOWDELAY,                            /* tos */
-			libnet_get_prand(LIBNET_PRu16),            /* id */
-			0,                                         /* frag */
-			libnet_get_prand(LIBNET_PR8),              /* ttl */
-			IPPROTO_TCP,                               /* proto */
-			0,                                         /* sum */
-			libnet_get_prand(LIBNET_PRu32),            /* sa */
-			sin->sin_addr.s_addr,                      /* da */
-			libnet_getpbuf(sc->libnet, sc->tcp),       /* data */
-			libnet_getpbuf_size(sc->libnet, sc->tcp),  /* dlen */
-			sc->libnet,
-			sc->ip);
-
-	buf = libnet_getpbuf(sc->libnet, sc->ip);
-	len = libnet_getpbuf_size(sc->libnet, sc->ip);
+	buf = libnet_getpbuf(sc->libnet, sc->tcp);
+	len = libnet_getpbuf_size(sc->libnet, sc->tcp);
 	dump(buf, len);
 
 	ret = sendto(sc->rawfd, buf, len, 0, sc->addr->ai_addr,
@@ -168,21 +154,6 @@ void scanner_tcp4_init(struct scanner *sc)
 			LIBNET_TCP_H,                              /* len */
 			NULL,                                      /* data */
 			0,                                         /* dlen */
-			sc->libnet,
-			0);
-
-	/* IP header. */
-	sc->ip = libnet_build_ipv4(LIBNET_IPV4_H + LIBNET_TCP_H,   /* len */
-			IPTOS_LOWDELAY,                            /* tos */
-			libnet_get_prand(LIBNET_PRu16),            /* id */
-			0,                                         /* frag */
-			libnet_get_prand(LIBNET_PR8),              /* ttl */
-			IPPROTO_TCP,                               /* proto */
-			0,                                         /* sum */
-			libnet_get_prand(LIBNET_PRu32),            /* sa */
-			sin->sin_addr.s_addr,                      /* da */
-			libnet_getpbuf(sc->libnet, sc->tcp),       /* data */
-			libnet_getpbuf_size(sc->libnet, sc->tcp),  /* dlen */
 			sc->libnet,
 			0);
 
