@@ -99,6 +99,7 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 	memset(sc, 0, sizeof(struct scanner));
 	sc->eventfd = sc->rawfd = -1;
 
+	/* Create event manager. */
 	sc->eventfd = epoll_create1(0);
 	if (sc->eventfd == -1)
 		fatal("epoll_create1(2)");
@@ -108,20 +109,16 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 	if (sc->rawfd == -1)
 		fatal("socket(2)");
 
-	/* Address info hints. */
+	/* Address info for the host. */
 	memset(&sc->hints, 0, sizeof(sc->hints));
 	sc->hints.ai_family = family;
 	sc->hints.ai_socktype = SOCK_RAW;
 	sc->hints.ai_protocol = proto;
 	sc->hints.ai_addr = NULL;
 	sc->hints.ai_next = NULL;
-
-	/* We'll set this later. */
-	sc->start_port = start_port;
-	sc->end_port = end_port;
-	sc->next_port = sc->start_port;
-	sc->reader = reader;
-	sc->writer = writer;
+	ret = getaddrinfo(name, NULL, &sc->hints, &sc->addr);
+	if (ret != 0)
+		fatal("getaddrinfo(3)");
 
 	/* Register it to the event manager. */
 	sc->ev.events = EPOLLIN|EPOLLOUT;
@@ -130,6 +127,13 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 	ret = epoll_ctl(sc->eventfd, EPOLL_CTL_ADD, sc->rawfd, &sc->ev);
 	if (ret == -1)
 		fatal("epoll_ctl(2)");
+
+	/* Member variable initialization. */
+	sc->start_port = start_port;
+	sc->end_port = end_port;
+	sc->next_port = sc->start_port;
+	sc->reader = reader;
+	sc->writer = writer;
 }
 
 void scanner_term(struct scanner *sc)
