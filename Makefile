@@ -16,17 +16,16 @@ all: $(TARGET)
 $(TARGET): main.o $(OBJ)
 	$(CC) -o $@ $^
 
-%.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
-
 test: $(TEST_TARGET)
 	$(SUDO) ./$(TEST_TARGET) -c
-
 $(TEST_TARGET): $(TEST_OBJ) $(OBJ)
 	$(CXX) -o $@ $^ $(LDXXFLAGS)
 
 tests/%.o: tests/%.c $(DEPS)
 	$(CXX) -c -o $@ $< $(CXXFLAGS)
+
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 clean:
 	$(RM) $(OBJ) $(TEST_OBJ) $(TMP) $(TARGET) $(TEST_TARGET)
