@@ -1,7 +1,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
-#include <netinet/tcp.h>
+#include <linux/tcp.h>
 
 #include "utils.h"
 #include "scanner.h"
@@ -50,17 +50,17 @@ static int writer(struct scanner *sc)
 
 	/* TCP header. */
 	tcp = (struct tcphdr *)(sc->obuf + 20);
-	tcp->th_sport = 0;
-	tcp->th_dport = htons(sc->next_port);
-	tcp->th_seq = 0;
-	tcp->th_ack = 0;
-	tcp->th_x2 = 0;
-	tcp->th_off = 5;
-	tcp->th_flags = TH_SYN;
-	tcp->th_win = 0;
-	tcp->th_sum = 0;
-	tcp->th_urp = 0;
-	tcp->th_sum = tcp4_checksum(sc, tcp);
+	tcp->source = 0;
+	tcp->dest = htons(sc->next_port);
+	tcp->seq = 0;
+	tcp->ack_seq = 0;
+	tcp->res1 = 0;
+	tcp->doff = 5;
+	tcp->syn = 1;
+	tcp->window = 0;
+	tcp->check = 0;
+	tcp->urg_ptr = 0;
+	tcp->check = tcp4_checksum(sc, tcp);
 
 	dump(sc->obuf, sc->olen);
 
