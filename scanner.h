@@ -15,8 +15,8 @@ struct scanner {
 	int rawfd;
 
 	/* Read/write buffers. */
-	char ibuf[BUFSIZ];
-	char obuf[BUFSIZ];
+	unsigned char ibuf[BUFSIZ];
+	unsigned char obuf[BUFSIZ];
 	size_t olen;
 
 	/* Source and destination addresses. */
@@ -30,7 +30,7 @@ struct scanner {
 	int end_port;
 
 	/* TCP header checksum buffer. */
-	char cbuf[BUFSIZ];
+	unsigned char cbuf[BUFSIZ];
 
 	/* Reader and writer of the data packages. */
 	int (*reader)(struct scanner *sc);
