@@ -4,6 +4,7 @@ CXXFLAGS = -I. -I/usr/local/include
 LDXXFLAGS = -L/usr/local/lib -lCppUTest
 TARGET = scanner
 TEST_TARGET = tests/test
+TEST_OPS := -c -v
 SRC := scanner.c scanner4_tcp.c
 OBJ := $(SRC:.c=.o)
 TMP := *~ *.swp a.out **/*~ **/*.swp **/a.out
@@ -17,7 +18,7 @@ $(TARGET): main.o $(OBJ)
 	$(CC) -o $@ $^
 
 test: $(TEST_TARGET)
-	$(SUDO) ./$(TEST_TARGET) -c
+	$(SUDO) ./$(TEST_TARGET) $(TEST_OPS)
 $(TEST_TARGET): $(TEST_OBJ) $(OBJ)
 	$(CXX) -o $@ $^ $(LDXXFLAGS)
 
