@@ -22,7 +22,12 @@ TEST_GROUP(ScannerTest)
 	}
 };
 
-TEST(ScannerTest, CheckTCPv4InitializationStartPort)
+TEST(ScannerTest, CheckTCPv4InitStartPort)
 {
 	LONGS_EQUAL(sc.start_port, start_port);
+}
+
+TEST(ScannerTest, CheckTCPv4InitEndPort)
+{
+	LONGS_EQUAL(sc.end_port, end_port);
 }
