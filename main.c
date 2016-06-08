@@ -4,9 +4,10 @@
 #include "utils.h"
 #include "scanner.h"
 
-const int scanner_default_start_port = 0;
-const int scanner_default_end_port = 65535;
-char *const scanner_default_ifname = NULL;
+/* Default variables. */
+static const int scanner_default_start_port = 1;
+static const int scanner_default_end_port = 65535;
+static char *const scanner_default_ifname = NULL;
 
 int main(int argc, char *argv[])
 {
