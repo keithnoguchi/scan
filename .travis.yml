@@ -11,4 +11,4 @@ install:
   - ./configure --prefix=/usr/local
   - make
   - sudo make install
-script: make && make test
+script: make && sudo make test
