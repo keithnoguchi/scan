@@ -14,6 +14,8 @@ $ sudo scanner localhost
 
 ## How to test
 
-TBD
+```
+$ make test
+```
 
 Happy hacking!
