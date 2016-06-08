@@ -1,3 +1,4 @@
+SUDO := sudo
 CFLAGS = -I.
 CXXFLAGS = -I. -I/usr/local/include
 LDXXFLAGS = -L/usr/local/lib -lCppUTest
@@ -19,9 +20,9 @@ $(TARGET): main.o $(OBJ)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 test: $(TEST_TARGET)
-	./$(TEST_TARGET) -c
+	$(SUDO) ./$(TEST_TARGET) -c
 
-$(TEST_TARGET): $(OBJ) $(TEST_OBJ)
+$(TEST_TARGET): $(TEST_OBJ) $(OBJ)
 	$(CXX) -o $@ $^ $(LDXXFLAGS)
 
 tests/%.o: tests/%.c $(DEPS)
