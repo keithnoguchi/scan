@@ -4,8 +4,6 @@ compiler:
   - clang
   - gcc
 install:
-  # clang for clang++
-  - sudo apt-get install clang-3.5
   # CppUTest install
   - git clone https://github.com/cpputest/cpputest.git
   - cd cpputest
