@@ -10,7 +10,7 @@ DEPS = utils.h scanner.h
 TEST = tests/test_main.c
 TEST_OBJ := $(TEST:.c=.o)
 
-.PHONY: all clean test
+.PHONY: all test clean
 all: $(TARGET)
 $(TARGET): main.o $(OBJ)
 	$(CC) -o $@ $^
@@ -19,7 +19,7 @@ $(TARGET): main.o $(OBJ)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 test: $(TEST_TARGET)
-	./$(TEST_TARGET)
+	./$(TEST_TARGET) -c
 
 $(TEST_TARGET): $(OBJ) $(TEST_OBJ)
 	$(CXX) -o $@ $^ $(LDXXFLAGS)
@@ -28,4 +28,4 @@ tests/%.o: tests/%.c $(DEPS)
 	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 clean:
-	$(RM) $(OBJ) $(TEST_OBJ) $(TMP) $(TARGET)
+	$(RM) $(OBJ) $(TEST_OBJ) $(TMP) $(TARGET) $(TEST_TARGET)
