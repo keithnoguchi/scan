@@ -1,5 +1,5 @@
 CFLAGS = -I.
-CXXFLAGS = -I/usr/local/include
+CXXFLAGS = -I. -I/usr/local/include
 LDXXFLAGS = -L/usr/local/lib -lCppUTest
 TARGET = scanner
 TEST_TARGET = tests/test

@@ -1,6 +1,7 @@
 #ifndef _SCANNER_H
 #define _SCANNER_H
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/epoll.h>
 #include <netdb.h>
