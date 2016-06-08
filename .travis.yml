@@ -10,4 +10,8 @@ install:
   - autoreconf -i && ./configure --prefix=/usr/local
   - make && sudo make install
   - cd ../
+addons:
+  apt:
+    packages:
+      - clang
 script: make && sudo make test
