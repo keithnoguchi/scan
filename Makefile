@@ -7,7 +7,7 @@ SRC := scanner.c scanner4_tcp.c
 OBJ := $(SRC:.c=.o)
 TMP := *~ *.swp a.out **/*~ **/*.swp **/a.out
 DEPS = utils.h scanner.h
-TEST = tests/test_main.c
+TEST = tests/test_main.c tests/test_scanner.c
 TEST_OBJ := $(TEST:.c=.o)
 
 .PHONY: all test clean
