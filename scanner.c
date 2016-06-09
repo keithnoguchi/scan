@@ -1,3 +1,4 @@
+#include <time.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -9,9 +10,10 @@
 #include "scanner.h"
 #include "scanner4_tcp.h"
 
-/* Command line flags. */
+/* Command line flags/arguments. */
 bool debug_flag = false;
 bool packet_dump_flag = false;
+time_t duration_sec = 10;
 
 /* Epoll timeout millisecond. */
 static int epoll_timeout_millisecond = 100;
@@ -64,13 +66,19 @@ static inline void scanner_writer(struct scanner *sc)
 		sc->ev.data.fd = sc->rawfd;
 		sc->ev.data.ptr = (void *)sc;
 		epoll_ctl(sc->eventfd, EPOLL_CTL_MOD, sc->rawfd, &sc->ev);
-		info("Complete the probing\n");
+		debug("Complete the probe transmission\n");
 	}
 }
 
 int scanner_wait(struct scanner *sc)
 {
+	time_t now;
 	int nfds;
+
+	/* We've complete the scanning. */
+	now = time(NULL);
+	if (now - sc->start_time > duration_sec)
+		return 0;
 
 	/* Wait for the event, or timeout after epoll_timeout millisecond. */
 	nfds = epoll_wait(sc->eventfd, &sc->ev, 1, epoll_timeout_millisecond);
@@ -143,6 +151,9 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 	sc->start_port = start_port;
 	sc->end_port = end_port;
 	sc->next_port = sc->start_port;
+
+	/* Record the start time. */
+	sc->start_time = time(NULL);
 
 	switch (family) {
 	case PF_INET:

@@ -1,6 +1,7 @@
 #ifndef _SCANNER_H
 #define _SCANNER_H
 
+#include <time.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/epoll.h>
@@ -18,6 +19,9 @@ struct scanner {
 
 	/* Raw socket for the data packets. */
 	int rawfd;
+
+	/* Start time. */
+	time_t start_time;
 
 	/* Read/write buffers. */
 	unsigned char ibuf[BUFSIZ];
