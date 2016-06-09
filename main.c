@@ -11,13 +11,12 @@ static const unsigned short scanner_default_start_port = 1;
 static const unsigned short scanner_default_end_port = 65535;
 static char *const scanner_default_ifname = NULL;
 
-/* Command line flags. */
-bool debug_flag = false;
-
 static void usage(const char *const progname)
 {
-	fprintf(stderr, "Usage: %s [-d] <hostname> [-p port] [-i ifname]\n",
-			progname);
+	const char *const usage = "\
+Usage: %s [-h] [-d] [-p port] [-i ifname] destination\n";
+
+	fprintf(stderr, usage, progname);
 	exit(EXIT_FAILURE);
 }
 

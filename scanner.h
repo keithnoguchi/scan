@@ -62,6 +62,9 @@ static inline unsigned short checksum(unsigned short *buf, int nwords)
 	return (unsigned short)(~sum);
 }
 
+/* Externals. */
+extern bool debug_flag;
+
 /* Prototypes. */
 int scanner_wait(struct scanner *sc);
 void scanner_exec(struct scanner *sc);

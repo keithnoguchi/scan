@@ -8,6 +8,9 @@
 #include "scanner.h"
 #include "scanner4_tcp.h"
 
+/* Command line flags. */
+bool debug_flag = false;
+
 static int srcaddr(struct scanner *sc, const char *ifname)
 {
 	struct ifaddrs *addrs, *ifa;

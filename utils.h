@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <errno.h>
 
@@ -24,8 +25,11 @@ static inline void fatal(const char *const fmt, ...)
 
 static inline void debug(const char *const fmt, ...)
 {
+	extern bool debug_flag;
 	va_list ap;
 
+	if (debug_flag == false)
+		return;
 	printf("[debug] ");
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
@@ -45,8 +49,12 @@ static inline void info(const char *const fmt, ...)
 static inline void dump(const unsigned char *const data_buffer,
 		const unsigned int length)
 {
+	extern bool debug_flag;
 	unsigned char byte;
 	unsigned int i, j;
+
+	if (debug_flag == false)
+		return;
 
 	for (i = 0; i < length; ++i) {
 		byte = data_buffer[i];
