@@ -1,6 +1,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/ip.h>
+#include <linux/ip.h>
 #include <linux/tcp.h>
 
 #include "utils.h"
