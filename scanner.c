@@ -3,9 +3,6 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <ifaddrs.h>
-#include <netinet/in.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
 
 #include "utils.h"
 #include "scanner.h"
