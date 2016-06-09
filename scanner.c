@@ -16,7 +16,7 @@ bool packet_dump_flag = false;
 time_t duration_sec = 10;
 
 /* Epoll timeout millisecond. */
-static int epoll_timeout_millisecond = 100;
+static int epoll_timeout_millisec = 100;
 
 static int srcaddr(struct scanner *sc, const char *ifname)
 {
@@ -80,8 +80,8 @@ int scanner_wait(struct scanner *sc)
 	if (now - sc->start_time > duration_sec)
 		return 0;
 
-	/* Wait for the event, or timeout after epoll_timeout millisecond. */
-	nfds = epoll_wait(sc->eventfd, &sc->ev, 1, epoll_timeout_millisecond);
+	/* Wait for the event, or timeout after epoll_timeout milliseconds. */
+	nfds = epoll_wait(sc->eventfd, &sc->ev, 1, epoll_timeout_millisec);
 	if (nfds == -1)
 		fatal("epoll_wait(2)");
 

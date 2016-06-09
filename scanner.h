@@ -7,9 +7,10 @@
 #include <sys/epoll.h>
 #include <netdb.h>
 
-/* Command line options. */
+/* Command line options/arguments. */
 extern bool debug_flag;
 extern bool packet_dump_flag;
+extern time_t duration_sec;
 
 /* Scanner manager. */
 struct scanner {

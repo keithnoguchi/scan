@@ -14,7 +14,7 @@ static char *const scanner_default_ifname = NULL;
 static void usage(const char *const progname)
 {
 	const char *const usage = "\
-Usage: %s [-hdx] [-p port] [-i ifname] destination\n";
+Usage: %s [-hdx] [-p port] [-i ifname] [-t sec] destination\n";
 
 	fprintf(stderr, usage, progname);
 	exit(EXIT_FAILURE);
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 	int port;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "hdxp:i:")) != -1) {
+	while ((opt = getopt(argc, argv, "hdxp:i:t:")) != -1) {
 		switch (opt) {
 		case 'h':
 			usage(argv[0]);
@@ -50,6 +50,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'i':
 			ifname = optarg;
+			break;
+		case 't':
+			duration_sec = atoi(optarg);
 			break;
 		default:
 			usage(argv[0]);
