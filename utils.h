@@ -32,6 +32,16 @@ static inline void debug(const char *const fmt, ...)
 	va_end(ap);
 }
 
+static inline void info(const char *const fmt, ...)
+{
+	va_list ap;
+
+	printf("[info] ");
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
 static inline void dump(const unsigned char *const data_buffer,
 		const unsigned int length)
 {

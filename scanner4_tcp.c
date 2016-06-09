@@ -1,5 +1,8 @@
 #include <linux/ip.h>
 #include <linux/tcp.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "utils.h"
 #include "scanner.h"
@@ -9,7 +12,8 @@ static const size_t tcphdrlen = 20;
 
 static int reader(struct scanner *sc)
 {
-	struct sockaddr_in *sin = (struct sockaddr_in *) sc->dst->ai_addr;
+	char src[INET_ADDRSTRLEN];
+	struct sockaddr_in *sin;
 	struct tcphdr *tcp;
 	struct iphdr *ip;
 	int ret;
@@ -23,14 +27,27 @@ static int reader(struct scanner *sc)
 		return 0;
 
 	/* Drop the packet which is not from the destination. */
+	sin = (struct sockaddr_in *) sc->dst->ai_addr;
 	ip = (struct iphdr *) sc->ibuf;
 	if (ip->saddr != sin->sin_addr.s_addr) {
-		debug("Drop packet not from the destination.\n");
+		debug("Drop non-target packet from %s\n",
+			inet_ntop(AF_INET, &ip->saddr, src, sizeof(src)));
 		return 0;
 	}
 
-	debug("->\n");
+	inet_ntop(AF_INET, &ip->saddr, src, sizeof(src));
+	debug("Packet from %s\n", src);
 	dump(sc->ibuf, ret);
+
+	/* We only care about packet with SA flag on. */
+	tcp = (struct tcphdr *) ++ip;
+	if (tcp->syn == 0 || tcp->ack == 0) {
+		debug("Packet from %s for port %d doesn't have SYN/ACK\n",
+				src, ntohs(tcp->source));
+		return 0;
+	}
+
+	info("Port %d is open on %s\n", ntohs(tcp->source), src);
 
 	return ret;
 }
@@ -52,12 +69,11 @@ static unsigned short tcp4_checksum(struct scanner *sc, struct tcphdr *tcp)
 
 static int writer(struct scanner *sc)
 {
+	char dst[INET_ADDRSTRLEN];
 	struct sockaddr_in *sin;
 	struct tcphdr *tcp;
 	struct iphdr *ip;
 	int ret;
-
-	debug("<-\n");
 
 	/* IP header. */
 	ip = (struct iphdr *) sc->obuf;
@@ -77,6 +93,8 @@ static int writer(struct scanner *sc)
 	tcp->urg_ptr = 0;
 	tcp->check = tcp4_checksum(sc, tcp);
 
+	inet_ntop(AF_INET, &ip->daddr, dst, sizeof(dst));
+	debug("Packet to %s\n", dst);
 	dump(sc->obuf, sc->olen);
 
 	ret = sendto(sc->rawfd, sc->obuf, sc->olen, 0, sc->dst->ai_addr,
