@@ -25,7 +25,8 @@ static int srcaddr(struct scanner *sc, const char *ifname)
 			if (ifname == NULL || !strcmp(ifa->ifa_name, ifname))
 				if (ifa->ifa_flags & IFF_UP) {
 					if (ifname == NULL
-						&& (ifa->ifa_flags & IFF_LOOPBACK))
+						&& (ifa->ifa_flags
+							& IFF_LOOPBACK))
 						continue;
 					if (ifa->ifa_addr)
 						memcpy(&sc->src,
