@@ -10,6 +10,7 @@
 
 /* Command line flags. */
 bool debug_flag = false;
+bool packet_dump_flag = false;
 
 static int srcaddr(struct scanner *sc, const char *ifname)
 {

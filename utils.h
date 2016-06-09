@@ -49,11 +49,11 @@ static inline void info(const char *const fmt, ...)
 static inline void dump(const unsigned char *const data_buffer,
 		const unsigned int length)
 {
-	extern bool debug_flag;
+	extern bool packet_dump_flag;
 	unsigned char byte;
 	unsigned int i, j;
 
-	if (debug_flag == false)
+	if (packet_dump_flag == false)
 		return;
 
 	for (i = 0; i < length; ++i) {

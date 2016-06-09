@@ -6,6 +6,11 @@
 #include <sys/epoll.h>
 #include <netdb.h>
 
+/* Command line options. */
+extern bool debug_flag;
+extern bool packet_dump_flag;
+
+/* Scanner manager. */
 struct scanner {
 	/* Event manager. */
 	struct epoll_event ev;
@@ -61,9 +66,6 @@ static inline unsigned short checksum(unsigned short *buf, int nwords)
 
 	return (unsigned short)(~sum);
 }
-
-/* Externals. */
-extern bool debug_flag;
 
 /* Prototypes. */
 int scanner_wait(struct scanner *sc);

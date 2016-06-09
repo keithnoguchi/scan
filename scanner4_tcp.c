@@ -30,19 +30,19 @@ static int reader(struct scanner *sc)
 	sin = (struct sockaddr_in *) sc->dst->ai_addr;
 	ip = (struct iphdr *) sc->ibuf;
 	if (ip->saddr != sin->sin_addr.s_addr) {
-		debug("Drop non-target packet from %s\n",
+		debug("Drop packet from non-target host(%s)\n",
 			inet_ntop(AF_INET, &ip->saddr, src, sizeof(src)));
 		return 0;
 	}
 
 	inet_ntop(AF_INET, &ip->saddr, src, sizeof(src));
-	debug("Packet from %s\n", src);
+	tcp = (struct tcphdr *) (ip + 1);
+	debug("Recv from %s:%d\n", src, ntohs(tcp->source));
 	dump(sc->ibuf, ret);
 
 	/* We only care about packet with SA flag on. */
-	tcp = (struct tcphdr *) ++ip;
 	if (tcp->syn == 0 || tcp->ack == 0) {
-		debug("Packet from %s for port %d doesn't have SYN/ACK\n",
+		debug("Drop packet w/o SYN/ACK from host(%s:%d)\n",
 				src, ntohs(tcp->source));
 		return 0;
 	}
@@ -93,14 +93,14 @@ static int writer(struct scanner *sc)
 	tcp->urg_ptr = 0;
 	tcp->check = tcp4_checksum(sc, tcp);
 
-	inet_ntop(AF_INET, &ip->daddr, dst, sizeof(dst));
-	debug("Packet to %s\n", dst);
-	dump(sc->obuf, sc->olen);
-
 	ret = sendto(sc->rawfd, sc->obuf, sc->olen, 0, sc->dst->ai_addr,
 			sc->dst->ai_addrlen);
 	if (ret != sc->olen)
 		fatal("sendto()");
+
+	inet_ntop(AF_INET, &ip->daddr, dst, sizeof(dst));
+	debug("Sent to %s:%d\n", dst, ntohs(tcp->dest));
+	dump(sc->obuf, sc->olen);
 
 	if (++sc->next_port > sc->end_port) {
 		/* Disable writer event. */
