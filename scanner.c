@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -11,6 +12,9 @@
 /* Command line flags. */
 bool debug_flag = false;
 bool packet_dump_flag = false;
+
+/* Epoll timeout millisecond. */
+static int epoll_timeout_millisecond = 100;
 
 static int srcaddr(struct scanner *sc, const char *ifname)
 {
@@ -40,11 +44,36 @@ static int srcaddr(struct scanner *sc, const char *ifname)
 	return ret;
 }
 
+static inline void scanner_reader(struct scanner *sc)
+{
+	if (sc->reader)
+		while ((*sc->reader)(sc) != -1)
+			; /* read as much as we can. */
+}
+
+static inline void scanner_writer(struct scanner *sc)
+{
+	if (sc->writer)
+		if ((*sc->writer)(sc) < 0)
+			return;
+
+	if (++sc->next_port > sc->end_port) {
+		/* Disable writer event. */
+		epoll_ctl(sc->eventfd, EPOLL_CTL_DEL, sc->rawfd, NULL);
+		sc->ev.events = EPOLLIN;
+		sc->ev.data.fd = sc->rawfd;
+		sc->ev.data.ptr = (void *)sc;
+		epoll_ctl(sc->eventfd, EPOLL_CTL_MOD, sc->rawfd, &sc->ev);
+		info("Complete the probing\n");
+	}
+}
+
 int scanner_wait(struct scanner *sc)
 {
 	int nfds;
 
-	nfds = epoll_wait(sc->eventfd, &sc->ev, 1, -1);
+	/* Wait for the event, or timeout after epoll_timeout millisecond. */
+	nfds = epoll_wait(sc->eventfd, &sc->ev, 1, epoll_timeout_millisecond);
 	if (nfds == -1)
 		fatal("epoll_wait(2)");
 
@@ -53,19 +82,18 @@ int scanner_wait(struct scanner *sc)
 
 void scanner_exec(struct scanner *sc)
 {
-	struct scanner *scp = (struct scanner *) sc->ev.data.ptr;
-
 	if (sc->ev.events & EPOLLIN)
-		scanner_reader(scp);
+		scanner_reader(sc);
 	if (sc->ev.events & EPOLLOUT)
-		scanner_writer(scp);
+		scanner_writer(sc);
+	debug("tx: %d, rx: %d\n", sc->ocounter, sc->icounter);
 }
 
 void scanner_init(struct scanner *sc, const char *name, int family,
 		int proto, const unsigned short start_port,
 		const unsigned short end_port, const char *ifname)
 {
-	int ret;
+	int ret, flags;
 
 	memset(sc, 0, sizeof(struct scanner));
 	sc->eventfd = sc->rawfd = -1;
@@ -79,6 +107,14 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 	sc->rawfd = socket(family, SOCK_RAW, proto);
 	if (sc->rawfd == -1)
 		fatal("socket(2)");
+
+	/* Make socket non-blocking. */
+	flags = fcntl(sc->rawfd, F_GETFL, 0);
+	if (flags == -1)
+		fatal("fcntl(F_GETFL)");
+	ret = fcntl(sc->rawfd, F_SETFL, flags|O_NONBLOCK);
+	if (ret == -1)
+		fatal("fcntl(F_SETFL, O_NONBLOCK)");
 
 	/* Source and destination addresses.  */
 	memset(&sc->hints, 0, sizeof(sc->hints));
@@ -103,6 +139,7 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 		fatal("epoll_ctl(2)");
 
 	/* Member variable initialization. */
+	sc->icounter = sc->ocounter = 0;
 	sc->start_port = start_port;
 	sc->end_port = end_port;
 	sc->next_port = sc->start_port;

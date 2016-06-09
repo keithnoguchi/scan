@@ -34,6 +34,10 @@ struct scanner {
 	int start_port;
 	int end_port;
 
+	/* Packet counters. */
+	size_t icounter;
+	size_t ocounter;
+
 	/* TCP header checksum buffer. */
 	unsigned char cbuf[BUFSIZ];
 
@@ -43,18 +47,6 @@ struct scanner {
 };
 
 /* Inlines. */
-static inline void scanner_reader(struct scanner *sc)
-{
-	if (sc->reader)
-		(*sc->reader)(sc);
-}
-
-static inline void scanner_writer(struct scanner *sc)
-{
-	if (sc->writer)
-		(*sc->writer)(sc);
-}
-
 static inline unsigned short checksum(unsigned short *buf, int nwords)
 {
 	unsigned long sum;

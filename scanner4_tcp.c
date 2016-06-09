@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
 #include <sys/socket.h>
@@ -19,12 +20,11 @@ static int reader(struct scanner *sc)
 	int ret;
 
 	ret = recv(sc->rawfd, sc->ibuf, sizeof(sc->ibuf), 0);
-	if (ret < 0)
+	if (ret < 0) {
+		if (errno == EAGAIN)
+			return ret;
 		fatal("recv(3)");
-
-	/* Ignore packet less than 40(IP + TCP header size) bytes. */
-	if (ret < iphdrlen + tcphdrlen)
-		return 0;
+	}
 
 	/* Drop the packet which is not from the destination. */
 	sin = (struct sockaddr_in *) sc->dst->ai_addr;
@@ -39,6 +39,11 @@ static int reader(struct scanner *sc)
 	tcp = (struct tcphdr *) (ip + 1);
 	debug("Recv from %s:%d\n", src, ntohs(tcp->source));
 	dump(sc->ibuf, ret);
+	sc->icounter++;
+
+	/* Ignore packet less than 40(IP + TCP header size) bytes. */
+	if (ret < iphdrlen + tcphdrlen)
+		return 0;
 
 	/* We only care about packet with SA flag on. */
 	if (tcp->syn == 0 || tcp->ack == 0) {
@@ -81,7 +86,7 @@ static int writer(struct scanner *sc)
 
 	/* TCP header. */
 	tcp = (struct tcphdr *)(sc->obuf + tcphdrlen);
-	tcp->source = 0;
+	tcp->source = htons(1024);
 	tcp->dest = htons(sc->next_port);
 	tcp->seq = 0;
 	tcp->ack_seq = 0;
@@ -101,13 +106,7 @@ static int writer(struct scanner *sc)
 	inet_ntop(AF_INET, &ip->daddr, dst, sizeof(dst));
 	debug("Sent to %s:%d\n", dst, ntohs(tcp->dest));
 	dump(sc->obuf, sc->olen);
-
-	if (++sc->next_port > sc->end_port) {
-		/* Disable writer event. */
-		sc->ev.events = EPOLLIN;
-		epoll_ctl(sc->eventfd, EPOLL_CTL_MOD, sc->rawfd, &sc->ev);
-		info("Complete the probing\n");
-	}
+	sc->ocounter++;
 
 	return ret;
 }
