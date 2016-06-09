@@ -13,8 +13,10 @@ $ make
 ## How to run
 
 ```
-$ sudo scanner localhost
+$ sudo ./scanner localhost
 ```
+
+We need to be as root for RAW socket.
 
 ## How to test
 
