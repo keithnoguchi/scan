@@ -11,6 +11,7 @@ static const size_t tcphdrlen = 20;
 
 static int reader(struct scanner *sc)
 {
+	struct sockaddr_in *sin = (struct sockaddr_in *) sc->dst->ai_addr;
 	struct tcphdr *tcp;
 	struct iphdr *ip;
 	int ret;
@@ -23,7 +24,14 @@ static int reader(struct scanner *sc)
 	if (ret < iphdrlen + tcphdrlen)
 		return 0;
 
-	printf("->\n");
+	/* Drop the packet which is not from the destination. */
+	ip = (struct iphdr *) sc->ibuf;
+	if (ip->saddr != sin->sin_addr.s_addr) {
+		debug("Drop packet not from the destination.\n");
+		return 0;
+	}
+
+	debug("->\n");
 	dump(sc->ibuf, ret);
 
 	return ret;
@@ -51,7 +59,7 @@ static int writer(struct scanner *sc)
 	struct iphdr *ip;
 	int ret;
 
-	printf("<-\n");
+	debug("<-\n");
 
 	/* IP header. */
 	ip = (struct iphdr *) sc->obuf;

@@ -22,6 +22,16 @@ static inline void fatal(const char *const fmt, ...)
 	exit(EXIT_FAILURE);
 }
 
+static inline void debug(const char *const fmt, ...)
+{
+	va_list ap;
+
+	printf("[debug] ");
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
 static inline void dump(const unsigned char *const data_buffer,
 		const unsigned int length)
 {
