@@ -6,13 +6,22 @@
 #include "utils.h"
 #include "scanner.h"
 
+static const size_t iphdrlen = 20;
+static const size_t tcphdrlen = 20;
+
 static int reader(struct scanner *sc)
 {
+	struct tcphdr *tcp;
+	struct iphdr *ip;
 	int ret;
 
 	ret = recv(sc->rawfd, sc->ibuf, sizeof(sc->ibuf), 0);
 	if (ret < 0)
 		fatal("recv(3)");
+
+	/* Ignore packet less than 40(IP + TCP header size) bytes. */
+	if (ret < iphdrlen + tcphdrlen)
+		return 0;
 
 	printf("->\n");
 	dump(sc->ibuf, ret);
@@ -49,7 +58,7 @@ static int writer(struct scanner *sc)
 	ip->id = htonl(54321); /* randomize. */
 
 	/* TCP header. */
-	tcp = (struct tcphdr *)(sc->obuf + 20);
+	tcp = (struct tcphdr *)(sc->obuf + tcphdrlen);
 	tcp->source = 0;
 	tcp->dest = htons(sc->next_port);
 	tcp->seq = 0;
