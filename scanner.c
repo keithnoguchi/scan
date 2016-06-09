@@ -58,8 +58,8 @@ void scanner_exec(struct scanner *sc)
 }
 
 void scanner_init(struct scanner *sc, const char *name, int family,
-		int proto, const int start_port, const int end_port,
-		const char *ifname)
+		int proto, const unsigned short start_port,
+		const unsigned short end_port, const char *ifname)
 {
 	int ret;
 
