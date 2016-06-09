@@ -22,17 +22,17 @@ static int reader(struct scanner *sc)
 
 static unsigned short tcp4_checksum(struct scanner *sc, struct tcphdr *tcp)
 {
-	struct iptmp {
+	struct cdata {
 		u_int32_t saddr;
 		u_int32_t daddr;
 		u_int8_t buf;
 		u_int8_t protocol;
 		u_int16_t length;
 		struct tcphdr tcp;
-	} *tmp = (struct iptmp *) sc->cbuf;
-	tmp->tcp = *tcp;
+	} *cdata = (struct cdata *) sc->cbuf;
+	cdata->tcp = *tcp;
 
-	return checksum((uint16_t *) sc->cbuf, sizeof(*tmp));
+	return checksum((uint16_t *) cdata, sizeof(struct cdata));
 }
 
 static int writer(struct scanner *sc)
@@ -113,17 +113,17 @@ void scanner_tcp4_init(struct scanner *sc)
 	sc->olen = sizeof(struct iphdr) + sizeof(struct tcphdr);
 
 	/* Prepare the checksum buffer. */
-	struct iptmp {
+	struct cdata {
 		u_int32_t saddr;
 		u_int32_t daddr;
 		u_int8_t buf;
 		u_int8_t protocol;
 		u_int16_t length;
 		struct tcphdr tcp;
-	} *tmp = (struct iptmp *) sc->cbuf;
-	tmp->saddr = ip->saddr;
-	tmp->daddr = ip->daddr;
-	tmp->buf = 0;
-	tmp->protocol = ip->protocol;
-	tmp->length = htons(20);
+	} *cdata = (struct cdata *) sc->cbuf;
+	cdata->saddr = ip->saddr;
+	cdata->daddr = ip->daddr;
+	cdata->buf = 0;
+	cdata->protocol = ip->protocol;
+	cdata->length = htons(20);
 }
