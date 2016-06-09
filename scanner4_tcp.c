@@ -106,7 +106,7 @@ static int writer(struct scanner *sc)
 		/* Disable writer event. */
 		sc->ev.events = EPOLLIN;
 		epoll_ctl(sc->eventfd, EPOLL_CTL_MOD, sc->rawfd, &sc->ev);
-		printf("done with sending\n");
+		info("Complete the probing\n");
 	}
 
 	return ret;

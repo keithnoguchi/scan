@@ -30,6 +30,7 @@ static inline void debug(const char *const fmt, ...)
 
 	if (debug_flag == false)
 		return;
+
 	printf("[debug] ");
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
