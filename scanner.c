@@ -49,8 +49,7 @@ static int srcaddr(struct scanner *sc, const char *ifname)
 static inline void scanner_reader(struct scanner *sc)
 {
 	if (sc->reader)
-		while ((*sc->reader)(sc) != -1)
-			; /* read as much as we can. */
+		(*sc->reader)(sc);
 }
 
 static inline void scanner_writer(struct scanner *sc)
@@ -92,7 +91,7 @@ void scanner_exec(struct scanner *sc)
 {
 	if (sc->ev.events & EPOLLIN)
 		scanner_reader(sc);
-	if (sc->ev.events & EPOLLOUT)
+	else if (sc->ev.events & EPOLLOUT)
 		scanner_writer(sc);
 	debug("tx: %d, rx: %d\n", sc->ocounter, sc->icounter);
 }
