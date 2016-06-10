@@ -4,6 +4,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+/* Avoid the name colision on older linux kernel, as least 3.13.0. */
+#include <linux/libc-compat.h>
 #include <linux/ipv6.h>
 #include <linux/tcp.h>
 
