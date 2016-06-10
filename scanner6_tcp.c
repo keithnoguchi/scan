@@ -2,12 +2,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/ip6.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-/* Avoid the name colision on older linux kernel, as least 3.13.0. */
-#include <linux/libc-compat.h>
-#include <linux/ipv6.h>
-#include <linux/tcp.h>
 
 #include "utils.h"
 #include "scanner.h"
@@ -21,31 +19,31 @@ static int reader(struct scanner *sc)
 	struct sockaddr_in6 *sin;
 	unsigned short port;
 	struct tcphdr *tcp;
-	struct ipv6hdr *ip;
+	struct ip6_hdr *ip;
 	int ret;
 
 	/* Drop the packet which is not from the destination. */
 	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
-	ip = (struct ipv6hdr *) sc->ibuf;
-	if (!memcmp(&ip->saddr, &sin->sin6_addr, sizeof(struct in6_addr))) {
+	ip = (struct ip6_hdr *) sc->ibuf;
+	if (!memcmp(&ip->ip6_src, &sin->sin6_addr, sizeof(struct in6_addr))) {
 		debug("Drop packet from non-target host(%s)\n",
-			inet_ntop(AF_INET6, &ip->saddr, src, sizeof(src)));
+			inet_ntop(AF_INET6, &ip->ip6_src, src, sizeof(src)));
 		return -1;
 	}
 
-	inet_ntop(AF_INET6, &ip->saddr, src, sizeof(src));
+	inet_ntop(AF_INET6, &ip->ip6_src, src, sizeof(src));
 	tcp = (struct tcphdr *) (ip + 1);
-	port = ntohs(tcp->source);
+	port = ntohs(tcp->th_sport);
 	debug("Recv from %s:%d\n", src, port);
 	dump(sc->ibuf, ret);
 	sc->icounter++;
 
-	/* Ignore packet less than 40(IP + TCP header size) bytes. */
+	/* Ignore packet less than 60(IP + TCP header size) bytes. */
 	if (ret < iphdrlen + tcphdrlen)
 		return -1;
 
 	/* We only care about packet with SA flag on. */
-	if (tcp->syn == 0 || tcp->ack == 0) {
+	if ((tcp->th_flags & (TH_SYN|TH_ACK)) != (TH_SYN|TH_ACK)) {
 		debug("Drop packet w/o SYN/ACK from host(%s:%d)\n", src, port);
 		return -1;
 	}
@@ -75,27 +73,27 @@ static int writer(struct scanner *sc)
 	char dst[INET6_ADDRSTRLEN];
 	struct sockaddr_in6 *sin;
 	struct tcphdr *tcp;
-	struct ipv6hdr *ip;
+	struct ip6_hdr *ip;
 
 	/* IP header. */
-	ip = (struct ipv6hdr *) sc->obuf;
+	ip = (struct ip6_hdr *) sc->obuf;
 
 	/* TCP header. */
 	tcp = (struct tcphdr *)(sc->obuf + tcphdrlen);
-	tcp->source = htons(1024);
-	tcp->dest = htons(sc->next_port);
-	tcp->seq = 0;
-	tcp->ack_seq = 0;
-	tcp->res1 = 0;
-	tcp->doff = 5;
-	tcp->syn = 1;
-	tcp->window = 0;
-	tcp->check = 0;
-	tcp->urg_ptr = 0;
-	tcp->check = tcp_checksum(sc, tcp);
+	tcp->th_sport = htons(1024);
+	tcp->th_dport = htons(sc->next_port);
+	tcp->th_seq = 0;
+	tcp->th_ack = 0;
+	tcp->th_x2 = 0;
+	tcp->th_off = 5;
+	tcp->th_flags = TH_SYN;
+	tcp->th_win = 0;
+	tcp->th_sum = 0;
+	tcp->th_urp = 0;
+	tcp->th_sum = tcp_checksum(sc, tcp);
 
-	inet_ntop(AF_INET6, &ip->daddr, dst, sizeof(dst));
-	debug("Sent to %s:%d\n", dst, ntohs(tcp->dest));
+	inet_ntop(AF_INET6, &ip->ip6_dst, dst, sizeof(dst));
+	debug("Sent to %s:%d\n", dst, ntohs(tcp->th_dport));
 	dump(sc->obuf, sc->olen);
 
 	return 0;
@@ -104,7 +102,7 @@ static int writer(struct scanner *sc)
 void scanner_tcp6_init(struct scanner *sc)
 {
 	struct sockaddr_in6 *sin;
-	struct ipv6hdr *ip;
+	struct ip6_hdr *ip;
 	int on = 1;
 	int ret;
 
@@ -117,19 +115,18 @@ void scanner_tcp6_init(struct scanner *sc)
 	sc->writer = writer;
 
 	/* Prepare the IP header. */
-	ip = (struct ipv6hdr *) sc->obuf;
-	ip->version = 6;
-	ip->priority = 0;
-	ip->payload_len = htons(tcphdrlen);
-	ip->nexthdr = sc->dst->ai_protocol;
-	ip->hop_limit = 255;
+	ip = (struct ip6_hdr *) sc->obuf;
+	ip->ip6_vfc = 6 << 4;
+	ip->ip6_plen = htons(tcphdrlen);
+	ip->ip6_nxt = sc->dst->ai_protocol;
+	ip->ip6_hlim = 255;
 	sin = (struct sockaddr_in6 *) &sc->src;
-	memcpy(&ip->saddr, &sin->sin6_addr, sizeof(struct in6_addr));
+	memcpy(&ip->ip6_src, &sin->sin6_addr, sizeof(struct in6_addr));
 	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
-	memcpy(&ip->daddr, &sin->sin6_addr, sizeof(struct in6_addr));
+	memcpy(&ip->ip6_dst, &sin->sin6_addr, sizeof(struct in6_addr));
 
 	/* We only send TCP/IP header portion. */
-	sc->olen = sizeof(struct ipv6hdr) + sizeof(struct tcphdr);
+	sc->olen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
 
 	/* Prepare the checksum buffer. */
 	struct cdata {
@@ -140,9 +137,9 @@ void scanner_tcp6_init(struct scanner *sc)
 		u_int8_t nexthdr;
 		struct tcphdr tcp;
 	} *cdata = (struct cdata *) sc->cbuf;
-	memcpy(&cdata->saddr, &ip->saddr, sizeof(struct in6_addr));
-	memcpy(&cdata->daddr, &ip->daddr, sizeof(struct in6_addr));
+	memcpy(&cdata->saddr, &ip->ip6_src, sizeof(struct in6_addr));
+	memcpy(&cdata->daddr, &ip->ip6_dst, sizeof(struct in6_addr));
 	cdata->buf[0] = cdata->buf[1] = cdata->buf[2] = 0;
-	cdata->nexthdr = ip->nexthdr;
+	cdata->nexthdr = ip->ip6_nxt;
 	cdata->length = htons(iphdrlen);
 }
