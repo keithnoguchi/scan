@@ -15,16 +15,10 @@ static int reader(struct scanner *sc)
 {
 	char src[INET_ADDRSTRLEN];
 	struct sockaddr_in *sin;
+	unsigned short port;
 	struct tcphdr *tcp;
 	struct iphdr *ip;
 	int ret;
-
-	ret = recv(sc->rawfd, sc->ibuf, sizeof(sc->ibuf), 0);
-	if (ret < 0) {
-		if (errno == EAGAIN)
-			return ret;
-		fatal("recv(3)");
-	}
 
 	/* Drop the packet which is not from the destination. */
 	sin = (struct sockaddr_in *) sc->dst->ai_addr;
@@ -32,29 +26,29 @@ static int reader(struct scanner *sc)
 	if (ip->saddr != sin->sin_addr.s_addr) {
 		debug("Drop packet from non-target host(%s)\n",
 			inet_ntop(AF_INET, &ip->saddr, src, sizeof(src)));
-		return 0;
+		return -1;
 	}
 
 	inet_ntop(AF_INET, &ip->saddr, src, sizeof(src));
 	tcp = (struct tcphdr *) (ip + 1);
-	debug("Recv from %s:%d\n", src, ntohs(tcp->source));
+	port = ntohs(tcp->source);
+	debug("Recv from %s:%d\n", src, port);
 	dump(sc->ibuf, ret);
 	sc->icounter++;
 
 	/* Ignore packet less than 40(IP + TCP header size) bytes. */
 	if (ret < iphdrlen + tcphdrlen)
-		return 0;
+		return -1;
 
 	/* We only care about packet with SA flag on. */
 	if (tcp->syn == 0 || tcp->ack == 0) {
-		debug("Drop packet w/o SYN/ACK from host(%s:%d)\n",
-				src, ntohs(tcp->source));
-		return 0;
+		debug("Drop packet w/o SYN/ACK from host(%s:%d)\n", src, port);
+		return -1;
 	}
 
-	info("Port %d is open on %s\n", ntohs(tcp->source), src);
+	info("Port %d is open on %s\n", port, src);
 
-	return ret;
+	return port;
 }
 
 static unsigned short tcp4_checksum(struct scanner *sc, struct tcphdr *tcp)
