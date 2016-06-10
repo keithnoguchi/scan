@@ -114,7 +114,7 @@ void scanner_exec(struct scanner *sc)
 	debug("tx: %d, rx: %d\n", sc->ocounter, sc->icounter);
 }
 
-void scanner_init(struct scanner *sc, const char *name, int family,
+int scanner_init(struct scanner *sc, const char *name, int family,
 		int proto, const unsigned short start_port,
 		const unsigned short end_port, const char *ifname)
 {
@@ -174,18 +174,25 @@ void scanner_init(struct scanner *sc, const char *name, int family,
 
 	switch (family) {
 	case PF_INET:
-		if (proto == IPPROTO_TCP)
+		if (proto == IPPROTO_TCP) {
 			scanner_tcp4_init(sc);
-		else
-			fatal("TCP is the only supported protocol in IPv4\n");
+			ret = 0;
+		} else {
+			warn("TCP is the only supported protocol in IPv4\n");
+			ret = -1;
+		}
 		break;
 	case PF_INET6:
-		fatal("IPv6 is not supported\n");
+		warn("IPv6 is not supported\n");
+		ret = -1;
 		break;
 	default:
-		fatal("Unsupported protocol family\n");
+		warn("Unsupported protocol family\n");
+		ret = -1;
 		break;
-	 }
+	}
+
+	return ret;
 }
 
 void scanner_term(struct scanner *sc)

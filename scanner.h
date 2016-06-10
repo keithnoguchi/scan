@@ -67,7 +67,7 @@ static inline unsigned short checksum(unsigned short *buf, int nwords)
 /* Prototypes. */
 int scanner_wait(struct scanner *sc);
 void scanner_exec(struct scanner *sc);
-void scanner_init(struct scanner *sc, const char *name, int family,
+int scanner_init(struct scanner *sc, const char *name, int family,
 		int proto, const unsigned short start_port,
 		const unsigned short end_port, const char *ifname);
 void scanner_term(struct scanner *sc);

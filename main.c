@@ -14,7 +14,7 @@ static char *const scanner_default_ifname = NULL;
 static void usage(const char *const progname)
 {
 	const char *const usage = "\
-Usage: %s [-hdx] [-p port] [-i ifname] [-t sec] destination\n";
+Usage: %s [-hdx6] [-p port] [-i ifname] [-t sec] destination\n";
 
 	fprintf(stderr, usage, progname);
 	exit(EXIT_FAILURE);
@@ -25,12 +25,14 @@ int main(int argc, char *argv[])
 	unsigned short start_port = scanner_default_start_port;
 	unsigned short end_port = scanner_default_end_port;
 	char *ifname = scanner_default_ifname;
+	int domain = PF_INET;
 	struct scanner sc;
 	char *dstname;
 	int port;
 	int opt;
+	int ret;
 
-	while ((opt = getopt(argc, argv, "hdxp:i:t:")) != -1) {
+	while ((opt = getopt(argc, argv, "hdx6p:i:t:")) != -1) {
 		switch (opt) {
 		case 'h':
 			usage(argv[0]);
@@ -40,6 +42,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'x':
 			packet_dump_flag = true;
+			break;
+		case '6':
+			domain = PF_INET6;
 			break;
 		case 'p':
 			port = atoi(optarg);
@@ -65,8 +70,10 @@ int main(int argc, char *argv[])
 
 	/* Initialize the scanner with the hostname, address family,
 	 * and the protocol. */
-	scanner_init(&sc, dstname, PF_INET, IPPROTO_TCP, start_port,
+	ret = scanner_init(&sc, dstname, domain, IPPROTO_TCP, start_port,
 			end_port, ifname);
+	if (ret == -1)
+		exit(EXIT_FAILURE);
 
 	/* Light the fire! */
 	while (scanner_wait(&sc))

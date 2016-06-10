@@ -23,6 +23,16 @@ static inline void fatal(const char *const fmt, ...)
 	exit(EXIT_FAILURE);
 }
 
+static inline void warn(const char *const fmt, ...)
+{
+	va_list ap;
+
+	printf("[warn] ");
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
 static inline void debug(const char *const fmt, ...)
 {
 	extern bool debug_flag;
