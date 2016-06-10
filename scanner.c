@@ -96,7 +96,7 @@ int scanner_wait(struct scanner *sc)
 
 	/* We've complete the scanning. */
 	now = time(NULL);
-	if (now - sc->start_time > duration_sec)
+	if (now - sc->start_time >= duration_sec)
 		return 0;
 
 	/* Wait for the event, or timeout after epoll_timeout milliseconds. */
