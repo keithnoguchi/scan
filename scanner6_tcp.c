@@ -1,20 +1,14 @@
 #include <errno.h>
-#include <linux/in6.h>
-#include <linux/ipv6.h>
-#include <linux/tcp.h>
+#include <sys/types.h>
 #include <sys/socket.h>
-#define __USE_KERNEL_IPV6_DEFS
 #include <netinet/in.h>
-#undef __USE_KERNEL_IPV6_DEFS
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <linux/ipv6.h>
+#include <linux/tcp.h>
 
 #include "utils.h"
 #include "scanner.h"
-
-#ifndef INET6_ADDRSTRLEN
-#define INET6_ADDRSTRLEN 46
-#endif /* !INET6_ADDRSTRLEN */
 
 static const size_t iphdrlen = 40;
 static const size_t tcphdrlen = 20;
