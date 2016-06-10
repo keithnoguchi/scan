@@ -79,7 +79,7 @@ static int writer(struct scanner *sc)
 	ip = (struct ip6_hdr *) sc->obuf;
 
 	/* TCP header. */
-	tcp = (struct tcphdr *)(sc->obuf + tcphdrlen);
+	tcp = (struct tcphdr *)(sc->obuf + iphdrlen);
 	tcp->source = htons(1024);
 	tcp->dest = htons(sc->next_port);
 	tcp->seq = 0;
