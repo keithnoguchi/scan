@@ -9,4 +9,6 @@ install:
   - autoreconf -i && ./configure --prefix=/usr/local
   - make && sudo make install
   - cd ../
+before_script:
+  - uname -an
 script: make && sudo make test
