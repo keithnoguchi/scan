@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/epoll.h>
-#include <netdb.h>
+#include <sys/socket.h>
 
 /* Command line options/arguments. */
 extern bool debug_flag;
@@ -30,7 +30,6 @@ struct scanner {
 	size_t olen;
 
 	/* Source and destination addresses. */
-	struct addrinfo hints;
 	struct sockaddr_storage src;
 	struct addrinfo *dst;
 

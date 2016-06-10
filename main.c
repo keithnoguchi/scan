@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <netinet/in.h>
 
 #include "utils.h"
 #include "scanner.h"

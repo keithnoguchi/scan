@@ -5,10 +5,12 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <ifaddrs.h>
+#include <netdb.h>
 
 #include "utils.h"
 #include "scanner.h"
 #include "scanner4_tcp.h"
+#include "scanner6_tcp.h"
 
 /* Command line flags/arguments. */
 bool debug_flag = false;
@@ -118,6 +120,7 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 		int proto, const unsigned short start_port,
 		const unsigned short end_port, const char *ifname)
 {
+	struct addrinfo hints;
 	int ret, flags;
 
 	memset(sc, 0, sizeof(struct scanner));
@@ -142,13 +145,13 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 		fatal("fcntl(F_SETFL, O_NONBLOCK)");
 
 	/* Source and destination addresses.  */
-	memset(&sc->hints, 0, sizeof(sc->hints));
-	sc->hints.ai_family = family;
-	sc->hints.ai_socktype = SOCK_RAW;
-	sc->hints.ai_protocol = proto;
-	sc->hints.ai_addr = NULL;
-	sc->hints.ai_next = NULL;
-	ret = getaddrinfo(name, NULL, &sc->hints, &sc->dst);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = family;
+	hints.ai_socktype = SOCK_RAW;
+	hints.ai_protocol = proto;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
+	ret = getaddrinfo(name, NULL, &hints, &sc->dst);
 	if (ret != 0)
 		fatal("getaddrinfo(3)");
 	ret = srcaddr(sc, ifname);
@@ -183,8 +186,13 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 		}
 		break;
 	case PF_INET6:
-		warn("IPv6 is not supported\n");
-		ret = -1;
+		if (proto == IPPROTO_TCP) {
+			scanner_tcp6_init(sc);
+			ret = 0;
+		} else {
+			warn("TCP is the only supported protocol in IPv6\n");
+			ret = -1;
+		}
 		break;
 	default:
 		warn("Unsupported protocol family\n");
