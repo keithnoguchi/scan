@@ -33,7 +33,7 @@ static int reader(struct scanner *sc)
 
 	inet_ntop(AF_INET6, &ip->ip6_src, src, sizeof(src));
 	tcp = (struct tcphdr *) (ip + 1);
-	port = ntohs(tcp->th_sport);
+	port = ntohs(tcp->source);
 	debug("Recv from %s:%d\n", src, port);
 	dump(sc->ibuf, ret);
 	sc->icounter++;
@@ -43,7 +43,7 @@ static int reader(struct scanner *sc)
 		return -1;
 
 	/* We only care about packet with SA flag on. */
-	if ((tcp->th_flags & (TH_SYN|TH_ACK)) != (TH_SYN|TH_ACK)) {
+	if (tcp->syn == 0 || tcp->ack == 0) {
 		debug("Drop packet w/o SYN/ACK from host(%s:%d)\n", src, port);
 		return -1;
 	}
@@ -81,19 +81,21 @@ static int writer(struct scanner *sc)
 	/* TCP header. */
 	tcp = (struct tcphdr *)(sc->obuf + tcphdrlen);
 	tcp->source = htons(1024);
-	tcp->th_dport = htons(sc->next_port);
-	tcp->th_seq = 0;
-	tcp->th_ack = 0;
-	tcp->th_x2 = 0;
-	tcp->th_off = 5;
-	tcp->th_flags = TH_SYN;
-	tcp->th_win = 0;
-	tcp->th_sum = 0;
-	tcp->th_urp = 0;
-	tcp->th_sum = tcp_checksum(sc, tcp);
+	tcp->dest = htons(sc->next_port);
+	tcp->seq = 0;
+	tcp->ack_seq = 0;
+	tcp->res1 = 0;
+	tcp->doff = 5;
+	tcp->syn = 1;
+	tcp->rst = tcp->psh = tcp->ack = tcp->urg = 0;
+	tcp->res2 = 0;
+	tcp->window = 0;
+	tcp->check = 0;
+	tcp->urg_ptr = 0;
+	tcp->check = tcp_checksum(sc, tcp);
 
 	inet_ntop(AF_INET6, &ip->ip6_dst, dst, sizeof(dst));
-	debug("Sent to %s:%d\n", dst, ntohs(tcp->th_dport));
+	debug("Sent to %s:%d\n", dst, ntohs(tcp->dest));
 	dump(sc->obuf, sc->olen);
 
 	return 0;
