@@ -64,9 +64,17 @@ static inline void scanner_reader(struct scanner *sc)
 
 static inline void scanner_writer(struct scanner *sc)
 {
+	int ret;
+
 	if (sc->writer)
-		if ((*sc->writer)(sc) < 0)
-			return;
+		(*sc->writer)(sc);
+
+	ret = sendto(sc->rawfd, sc->obuf, sc->olen, 0, sc->dst->ai_addr,
+			sc->dst->ai_addrlen);
+	if (ret != sc->olen)
+		fatal("sendto()");
+
+	sc->ocounter++;
 
 	if (++sc->next_port > sc->end_port) {
 		/* Disable writer event. */

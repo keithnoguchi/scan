@@ -72,7 +72,6 @@ static int writer(struct scanner *sc)
 	struct sockaddr_in *sin;
 	struct tcphdr *tcp;
 	struct iphdr *ip;
-	int ret;
 
 	/* IP header. */
 	ip = (struct iphdr *) sc->obuf;
@@ -92,17 +91,11 @@ static int writer(struct scanner *sc)
 	tcp->urg_ptr = 0;
 	tcp->check = tcp4_checksum(sc, tcp);
 
-	ret = sendto(sc->rawfd, sc->obuf, sc->olen, 0, sc->dst->ai_addr,
-			sc->dst->ai_addrlen);
-	if (ret != sc->olen)
-		fatal("sendto()");
-
 	inet_ntop(AF_INET, &ip->daddr, dst, sizeof(dst));
 	debug("Sent to %s:%d\n", dst, ntohs(tcp->dest));
 	dump(sc->obuf, sc->olen);
-	sc->ocounter++;
 
-	return ret;
+	return 0;
 }
 
 void scanner_tcp4_init(struct scanner *sc)
