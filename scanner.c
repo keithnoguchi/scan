@@ -96,7 +96,7 @@ static inline void scanner_writer(struct scanner *sc)
 		sc->ev.data.fd = sc->rawfd;
 		sc->ev.data.ptr = (void *)sc;
 		epoll_ctl(sc->eventfd, EPOLL_CTL_MOD, sc->rawfd, &sc->ev);
-		debug("Complete the probe transmission\n");
+		debug("Completed the probe transmission\n");
 	}
 }
 

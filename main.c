@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 		scanner_exec(&sc);
 
 	/* Complete the scanning. */
-	info("Complete the scanning\n");
+	info("Completed the scanning\n");
 
 	/* Done with the scanning. */
 	scanner_term(&sc);
