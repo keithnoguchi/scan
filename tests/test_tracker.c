@@ -77,3 +77,11 @@ TEST(TrackerTest, CheckPort65535Status)
 {
 	LONGS_EQUAL(INIT, tracker.status[65535]);
 }
+
+TEST(TrackerTest, CheckPortOpenStatus)
+{
+	port_status_t expected = OPEN;
+	unsigned short port = 65535;
+	tracker_set_open(&tracker, port);
+	LONGS_EQUAL(expected, tracker.status[port]);
+}
