@@ -13,6 +13,8 @@ extern bool debug_flag;
 extern bool packet_dump_flag;
 extern time_t duration_sec;
 
+typedef enum { UNKNOWN, CLOSED, OPEN } port_status_t;
+
 /* Port tracker. */
 struct tracker {
 	/* Start and end of the scanned port. */
@@ -23,7 +25,7 @@ struct tracker {
 	unsigned short next;
 
 	/* Open port status. */
-	bool status[UINT16_MAX];
+	port_status_t status[UINT16_MAX];
 };
 
 /* Scanner manager. */

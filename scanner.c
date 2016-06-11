@@ -22,7 +22,10 @@ static const int epoll_timeout_millisec = 100;
 
 static void init_port_tracker(struct tracker *t)
 {
-	;
+	int i;
+
+	for (i = t->start; i <= t->end; i++)
+		t->status[i] = UNKNOWN;
 }
 
 static inline bool is_valid_address(struct scanner *sc, struct ifaddrs *ifa)
