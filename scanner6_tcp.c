@@ -13,12 +13,6 @@
 static const size_t tcphdrlen = 20;
 static char addr[INET6_ADDRSTRLEN];
 
-static bool is_ll_addr(struct scanner *sc, const struct sockaddr *sa)
-{
-	struct sockaddr_in6 *sin = (struct sockaddr_in6 *) sa;
-	return IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr);
-}
-
 static int reader(struct scanner *sc)
 {
 	char src[INET6_ADDRSTRLEN];
@@ -145,9 +139,6 @@ void scanner_tcp6_init(struct scanner *sc)
 
 	inet_ntop(sc->dst->ai_family, &sin->sin6_addr, addr, sizeof(addr));
 	debug("Send from %s\n", addr);
-
-	/* Address validators. */
-	sc->is_ll_addr = is_ll_addr;
 
 	/* TCPv6 specific reader/writer. */
 	sc->reader = reader;

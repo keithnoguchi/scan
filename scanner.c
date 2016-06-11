@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "scanner.h"
 #include "scanner4_tcp.h"
+#include "scanner6.h"
 #include "scanner6_tcp.h"
 
 /* Command line flags/arguments. */
@@ -62,7 +63,7 @@ static int srcaddr(struct scanner *sc, const char *ifname)
 	freeifaddrs(addrs);
 
 	if (found == false)
-		fatal("There is no valid source address\n");
+		fatal("There is no valid source address");
 
 	return ret;
 }
@@ -131,6 +132,15 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 
 	memset(sc, 0, sizeof(struct scanner));
 	sc->eventfd = sc->rawfd = -1;
+
+	/* Generic Protocol family initialization. */
+	switch (family) {
+	case PF_INET6:
+		scanner6_init(sc);
+		break;
+	default:
+		break;
+	}
 
 	/* Create event manager. */
 	sc->eventfd = epoll_create1(0);

@@ -10,15 +10,18 @@
 
 static inline void fatal(const char *const fmt, ...)
 {
-	char buf[BUFSIZ];
+	char buf[BUFSIZ] = {'\0'};
 	va_list ap;
 
-	strerror_r(errno, buf, sizeof(buf));
+	if (errno != 0)
+		strerror_r(errno, buf, sizeof(buf));
 	fprintf(stderr, "[fatal] ");
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	fprintf(stderr, ": %s\n", buf);
+	if (buf[0] != '\0')
+		fprintf(stderr, ": %s", buf);
+	fprintf(stderr, "\n");
 
 	exit(EXIT_FAILURE);
 }
