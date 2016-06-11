@@ -18,7 +18,7 @@ bool packet_dump_flag = false;
 time_t duration_sec = 10;
 
 /* Epoll timeout millisecond. */
-static int epoll_timeout_millisec = 100;
+static const int epoll_timeout_millisec = 100;
 
 static int srcaddr(struct scanner *sc, const char *ifname)
 {
@@ -69,12 +69,8 @@ static inline void scanner_writer(struct scanner *sc)
 	int ret;
 
 	if (sc->writer)
-		(*sc->writer)(sc);
-
-	ret = sendto(sc->rawfd, sc->obuf, sc->olen, 0, sc->dst->ai_addr,
-			sc->dst->ai_addrlen);
-	if (ret != sc->olen)
-		fatal("sendto()");
+		if ((ret = (*sc->writer)(sc)) < 0)
+			return;
 
 	sc->ocounter++;
 

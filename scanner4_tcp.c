@@ -74,6 +74,7 @@ static int writer(struct scanner *sc)
 	struct sockaddr_in *sin;
 	struct tcphdr *tcp;
 	struct iphdr *ip;
+	int ret;
 
 	/* IP header. */
 	ip = (struct iphdr *) sc->obuf;
@@ -93,11 +94,21 @@ static int writer(struct scanner *sc)
 	tcp->urg_ptr = 0;
 	tcp->check = tcp_checksum(sc, tcp);
 
+	ret = sendto(sc->rawfd, sc->obuf, sc->olen, 0, sc->dst->ai_addr,
+			sc->dst->ai_addrlen);
+	if (ret != sc->olen) {
+		if (ret < 0)
+			warn("sendto() error\n");
+		else
+			info("sendto() can't send full data.  Will retry\n");
+		return -1;
+	}
+
 	inet_ntop(AF_INET, &ip->daddr, dst, sizeof(dst));
 	debug("Sent to %s:%d\n", dst, ntohs(tcp->dest));
 	dump(sc->obuf, sc->olen);
 
-	return 0;
+	return ret;
 }
 
 void scanner_tcp4_init(struct scanner *sc)
