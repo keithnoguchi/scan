@@ -24,12 +24,18 @@ static inline bool is_valid_address(struct scanner *sc, struct ifaddrs *ifa)
 {
 	if (ifa->ifa_addr == NULL)
 		return false;
-	return sc->valid_addr ? (*sc->valid_addr)(sc, ifa->ifa_addr) : true;
+
+	/* We don't use link-local address, as a source. */
+	else if (sc->is_ll_addr && (*sc->is_ll_addr)(sc, ifa->ifa_addr))
+		return false;
+
+	return true;
 }
 
 static int srcaddr(struct scanner *sc, const char *ifname)
 {
 	struct ifaddrs *addrs, *ifa;
+	bool found = false;
 	int ret;
 
 	ret = getifaddrs(&addrs);
@@ -44,12 +50,19 @@ static int srcaddr(struct scanner *sc, const char *ifname)
 						&& (ifa->ifa_flags
 							& IFF_LOOPBACK))
 						continue;
-					if (is_valid_address(sc, ifa))
+
+					if (is_valid_address(sc, ifa)) {
 						memcpy(&sc->src, ifa->ifa_addr,
 							sc->dst->ai_addrlen);
+						found = true;
+						break;
+					}
 				}
 
 	freeifaddrs(addrs);
+
+	if (found == false)
+		fatal("There is no valid source address\n");
 
 	return ret;
 }

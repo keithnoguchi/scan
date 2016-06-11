@@ -46,7 +46,7 @@ struct scanner {
 	unsigned char cbuf[BUFSIZ];
 
 	/* Address validator. */
-	bool (*valid_addr)(struct scanner *sc, struct sockaddr *sa);
+	bool (*is_ll_addr)(struct scanner *sc, const struct sockaddr *sa);
 
 	/* Reader and writer of the data packages. */
 	int (*reader)(struct scanner *sc);

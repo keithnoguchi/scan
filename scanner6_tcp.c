@@ -11,6 +11,13 @@
 #include "scanner.h"
 
 static const size_t tcphdrlen = 20;
+static char addr[INET6_ADDRSTRLEN];
+
+static bool is_ll_addr(struct scanner *sc, const struct sockaddr *sa)
+{
+	struct sockaddr_in6 *sin = (struct sockaddr_in6 *) sa;
+	return IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr);
+}
 
 static int reader(struct scanner *sc)
 {
@@ -127,7 +134,6 @@ void scanner_tcp6_init(struct scanner *sc)
 {
 	struct sockaddr_in6 *sin;
 	struct in6_pktinfo ipi;
-	int on = 1;
 	int ret;
 
 	sin = (struct sockaddr_in6 *) &sc->src;
@@ -136,6 +142,9 @@ void scanner_tcp6_init(struct scanner *sc)
 			sizeof(ipi));
 	if (ret != 0)
 		fatal("setsockopt(IPV6_PKTINFO)");
+
+	/* Address validators. */
+	sc->is_ll_addr = is_ll_addr;
 
 	/* TCPv6 specific reader/writer. */
 	sc->reader = reader;
