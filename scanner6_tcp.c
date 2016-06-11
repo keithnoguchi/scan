@@ -119,7 +119,8 @@ void scanner_tcp6_init(struct scanner *sc)
 	int on = 1;
 	int ret;
 
-	ret = setsockopt(sc->rawfd, IPPROTO_IPV6, IP_HDRINCL, &on, sizeof(on));
+	ret = setsockopt(sc->rawfd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
+			sizeof(on));
 	if (ret != 0)
 		fatal("setsockopt(3)");
 
