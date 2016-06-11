@@ -54,7 +54,7 @@ int scanner4_init(struct scanner *sc)
 		ret = scanner4_udp_init(sc);
 		break;
 	default:
-		warn("TCP is the only supported protocol in IPv4\n");
+		warn("TCP and UDP are the only supported protocol for IPv4\n");
 		ret = -1;
 		break;
 	}
