@@ -164,5 +164,5 @@ void scanner_tcp4_init(struct scanner *sc)
 	cdata->daddr = ip->daddr;
 	cdata->buf = 0;
 	cdata->protocol = ip->protocol;
-	cdata->length = htons(iphdrlen);
+	cdata->length = htons(tcphdrlen);
 }

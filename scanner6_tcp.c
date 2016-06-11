@@ -10,19 +10,26 @@
 #include "utils.h"
 #include "scanner.h"
 
-static const size_t iphdrlen = 40;
 static const size_t tcphdrlen = 20;
 
 static int reader(struct scanner *sc)
 {
 	char src[INET6_ADDRSTRLEN];
 	struct sockaddr_in6 *sin;
+	struct sockaddr_in6 addr;
+	struct msghdr msg;
+	struct iovec iov;
 	unsigned short port;
 	struct tcphdr *tcp;
-	struct ip6_hdr *ip;
 	int ret;
 
-	ret = recv(sc->rawfd, sc->ibuf, sizeof(sc->ibuf), 0);
+	msg.msg_name = (struct sockaddr *) &addr;
+	msg.msg_namelen = sizeof(addr);
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	iov.iov_base = sc->ibuf;
+	iov.iov_len = sizeof(sc->ibuf);
+	ret = recvmsg(sc->rawfd, &msg, 0);
 	if (ret < 0) {
 		if (errno == EAGAIN)
 			return 0;
@@ -31,22 +38,21 @@ static int reader(struct scanner *sc)
 
 	/* Drop the packet which is not from the destination. */
 	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
-	ip = (struct ip6_hdr *) sc->ibuf;
-	if (!memcmp(&ip->ip6_src, &sin->sin6_addr, sizeof(struct in6_addr))) {
+	if (!IN6_ARE_ADDR_EQUAL(&addr.sin6_addr, &sin->sin6_addr)) {
 		debug("Drop packet from non-target host(%s)\n",
-			inet_ntop(AF_INET6, &ip->ip6_src, src, sizeof(src)));
+			inet_ntop(AF_INET6, &addr.sin6_addr, src, sizeof(src)));
 		return -1;
 	}
 
-	inet_ntop(AF_INET6, &ip->ip6_src, src, sizeof(src));
-	tcp = (struct tcphdr *) (ip + 1);
+	inet_ntop(AF_INET6, &addr.sin6_addr, src, sizeof(src));
+	tcp = (struct tcphdr *) sc->ibuf;
 	port = ntohs(tcp->source);
 	debug("Recv from %s:%d\n", src, port);
 	dump(sc->ibuf, ret);
 	sc->icounter++;
 
-	/* Ignore packet less than 60(IP + TCP header size) bytes. */
-	if (ret < iphdrlen + tcphdrlen)
+	/* Ignore packet less than 20(TCP header size) bytes. */
+	if (ret < tcphdrlen)
 		return -1;
 
 	/* We only care about packet with SA flag on. */
@@ -157,5 +163,5 @@ void scanner_tcp6_init(struct scanner *sc)
 	cdata->daddr = sin->sin6_addr;
 	cdata->buf[0] = cdata->buf[1] = cdata->buf[2] = 0;
 	cdata->nexthdr = IPPROTO_TCP;
-	cdata->length = htons(iphdrlen);
+	cdata->length = htons(tcphdrlen);
 }
