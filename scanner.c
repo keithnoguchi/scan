@@ -76,7 +76,7 @@ static inline void scanner_reader(struct scanner *sc)
 		if ((port = (*sc->reader)(sc)) <= 0)
 			return;
 
-	info("Port %d is open on %s\n", port, sc->addr);
+	tracker_set_open(&sc->tracker, port);
 }
 
 static inline void scanner_writer(struct scanner *sc)
@@ -85,11 +85,11 @@ static inline void scanner_writer(struct scanner *sc)
 		if ((*sc->writer)(sc) < 0)
 			return;
 
-	debug("Sent to %s:%d\n", sc->addr, sc->ports.next);
+	debug("Sent to %s:%d\n", sc->addr, sc->tracker.next);
 	dump(sc->obuf, sc->olen);
 	sc->ocounter++;
 
-	if (sc->ports.next++ == sc->ports.end) {
+	if (sc->tracker.next++ == sc->tracker.end) {
 		/* Disable writer event. */
 		epoll_ctl(sc->eventfd, EPOLL_CTL_DEL, sc->rawfd, NULL);
 		sc->ev.events = EPOLLIN;
@@ -195,7 +195,7 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 	sc->icounter = sc->ocounter = 0;
 
 	/* Port tracker initialization. */
-	tracker_init(&sc->ports, start_port, end_port);
+	tracker_init(&sc->tracker, start_port, end_port, sc->addr);
 
 	/* Record the start time. */
 	sc->start_time = time(NULL);
@@ -216,7 +216,7 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 
 void scanner_term(struct scanner *sc)
 {
-	tracker_term(&sc->ports);
+	tracker_term(&sc->tracker);
 	if (sc->dst != NULL) {
 		freeaddrinfo(sc->dst);
 		sc->dst = NULL;

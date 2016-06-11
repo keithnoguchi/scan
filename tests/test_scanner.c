@@ -28,16 +28,6 @@ TEST_GROUP(Scanner)
 	}
 };
 
-TEST(Scanner, CheckTCPv4InitStartPort)
-{
-	LONGS_EQUAL(start_port, sc.ports.start);
-}
-
-TEST(Scanner, CheckTCPv4InitEndPort)
-{
-	LONGS_EQUAL(end_port, sc.ports.end);
-}
-
 TEST(Scanner, CheckTCPv4SourceAddr)
 {
 	struct sockaddr_in *sin = (struct sockaddr_in *)&sc.src;

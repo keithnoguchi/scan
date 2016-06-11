@@ -90,7 +90,7 @@ static int writer(struct scanner *sc)
 	/* TCP header. */
 	tcp = (struct tcphdr *)(sc->obuf + iphdrlen);
 	tcp->source = htons(1024);
-	tcp->dest = htons(sc->ports.next);
+	tcp->dest = htons(sc->tracker.next);
 	tcp->seq = 0;
 	tcp->ack_seq = 0;
 	tcp->res1 = 0;

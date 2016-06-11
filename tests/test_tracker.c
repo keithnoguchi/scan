@@ -17,7 +17,7 @@ TEST_GROUP(Tracker)
 
 	void setup()
 	{
-		tracker_init(&tracker, 0, 0);
+		tracker_init(&tracker, 0, 0, NULL);
 	}
 	void teardown()
 	{
@@ -43,14 +43,14 @@ TEST(Tracker, CheckDefaultNextPort)
 TEST(Tracker, CheckSpecifiedStartPort)
 {
 	unsigned short expected = 99;
-	tracker_init(&tracker, expected, 0);
+	tracker_init(&tracker, expected, 0, NULL);
 	LONGS_EQUAL(expected, tracker.start);
 }
 
 TEST(Tracker, CheckSpecifiedEndPort)
 {
 	unsigned short expected = 100;
-	tracker_init(&tracker, 0, expected);
+	tracker_init(&tracker, 0, expected, NULL);
 	LONGS_EQUAL(expected, tracker.end);
 }
 
@@ -58,7 +58,7 @@ TEST(Tracker, CheckWrongRangePortBackToDefaultPorts)
 {
 	unsigned short expected_start = 1;
 	unsigned short expected_end = UINT16_MAX;
-	tracker_init(&tracker, 100, 99);
+	tracker_init(&tracker, 100, 99, NULL);
 	LONGS_EQUAL(expected_start, tracker.start);
 	LONGS_EQUAL(expected_end, tracker.end);
 }

@@ -6,7 +6,7 @@ static const unsigned short default_start_port = 1;
 static const unsigned short default_end_port = UINT16_MAX;
 
 void tracker_init(struct tracker *t, const unsigned short start_port,
-		const unsigned short end_port)
+		const unsigned short end_port, char *const addr)
 {
 	unsigned short start = start_port, end = end_port;
 	int i;
@@ -16,6 +16,7 @@ void tracker_init(struct tracker *t, const unsigned short start_port,
 		start = end = 0;
 
 	/* Member variables. */
+	t->addr = addr;
 	t->start = start ? start : default_start_port;
 	t->end = end ? end : default_end_port;
 	t->next = t->start;

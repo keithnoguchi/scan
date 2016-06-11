@@ -40,7 +40,7 @@ struct scanner {
 	char *addr;
 
 	/* Scanning port related info. */
-	struct tracker ports;
+	struct tracker tracker;
 
 	/* Packet counters. */
 	size_t icounter;
