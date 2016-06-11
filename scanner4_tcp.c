@@ -12,11 +12,9 @@
 
 static const size_t iphdrlen = 20;
 static const size_t tcphdrlen = 20;
-static char addr[INET_ADDRSTRLEN];
 
 static int reader(struct scanner *sc)
 {
-	char src[INET_ADDRSTRLEN];
 	struct sockaddr_in *sin;
 	unsigned short port;
 	struct tcphdr *tcp;
@@ -39,24 +37,26 @@ static int reader(struct scanner *sc)
 	ip = (struct iphdr *) sc->ibuf;
 	if (ip->saddr != sin->sin_addr.s_addr) {
 		debug("Drop packet from non-target host(%s)\n",
-			inet_ntop(AF_INET, &ip->saddr, src, sizeof(src)));
+			inet_ntop(AF_INET, &ip->saddr, sc->addr,
+				sc->addrstr_len));
 		return -1;
 	}
 
-	inet_ntop(AF_INET, &ip->saddr, src, sizeof(src));
+	inet_ntop(AF_INET, &ip->saddr, sc->addr, sc->addrstr_len);
 	tcp = (struct tcphdr *) (ip + 1);
 	port = ntohs(tcp->source);
-	debug("Recv from %s:%d\n", src, port);
+	debug("Recv from %s:%d\n", sc->addr, port);
 	dump(sc->ibuf, ret);
 	sc->icounter++;
 
 	/* We only care about packet with SA flag on. */
 	if (tcp->syn == 0 || tcp->ack == 0) {
-		debug("Drop packet w/o SYN/ACK from host(%s:%d)\n", src, port);
+		debug("Drop packet w/o SYN/ACK from host(%s:%d)\n",
+				sc->addr, port);
 		return -1;
 	}
 
-	info("Port %d is open on %s\n", port, src);
+	info("Port %d is open on %s\n", port, sc->addr);
 
 	return port;
 }
@@ -78,7 +78,6 @@ static unsigned short tcp_checksum(struct scanner *sc, struct tcphdr *tcp)
 
 static int writer(struct scanner *sc)
 {
-	char dst[INET_ADDRSTRLEN];
 	struct sockaddr_in *sin;
 	struct tcphdr *tcp;
 	struct iphdr *ip;
@@ -108,12 +107,12 @@ static int writer(struct scanner *sc)
 		if (ret < 0)
 			warn("sendto() error\n");
 		else
-			info("sendto() can't send full data.  Will retry\n");
+			info("sendto() can't send full data\n");
 		return -1;
 	}
 
-	inet_ntop(AF_INET, &ip->daddr, dst, sizeof(dst));
-	debug("Sent to %s:%d\n", dst, ntohs(tcp->dest));
+	inet_ntop(AF_INET, &ip->daddr, sc->addr, sc->addrstr_len);
+	debug("Sent to %s:%d\n", sc->addr, ntohs(tcp->dest));
 	dump(sc->obuf, sc->olen);
 
 	return ret;

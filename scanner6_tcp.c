@@ -111,7 +111,7 @@ static int writer(struct scanner *sc)
 		if (ret < 0)
 			warn("sendto() error\n");
 		else
-			info("sendto() can't send full data.  Will retry\n");
+			info("sendto() can't send full data\n");
 		return -1;
 	}
 
