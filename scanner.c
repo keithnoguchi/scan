@@ -14,6 +14,7 @@
 
 /* Command line flags/arguments. */
 bool debug_flag = false;
+bool verbose_flag = false;
 bool packet_dump_flag = false;
 time_t duration_sec = 10;
 
@@ -109,6 +110,7 @@ int scanner_wait(struct scanner *sc)
 	now = time(NULL);
 	if (now - sc->start_time >= duration_sec) {
 		info("Completed the scanning\n");
+		tracker_print(&sc->tracker);
 		return 0;
 	}
 

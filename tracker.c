@@ -5,6 +5,18 @@
 static const unsigned short default_start_port = 1;
 static const unsigned short default_end_port = UINT16_MAX;
 
+void tracker_print(const struct tracker *t)
+{
+	int port;
+
+	printf("\nOpen ports on %s\n\n", t->addr);
+
+	for (port = t->start; port <= t->end; port++)
+		if (t->status[port] == OPEN)
+			printf("%d ", port);
+	printf("\n");
+}
+
 void tracker_init(struct tracker *t, const unsigned short start_port,
 		const unsigned short end_port, char *const addr)
 {

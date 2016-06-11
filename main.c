@@ -11,7 +11,7 @@
 static void usage(const char *const progname)
 {
 	const char *const usage = "\
-Usage: %s [-hdx46] [-p port] [-i ifname] [-t sec] destination\n";
+Usage: %s [-hdvx46] [-p port] [-i ifname] [-t sec] destination\n";
 
 	fprintf(stderr, usage, progname);
 	exit(EXIT_FAILURE);
@@ -29,13 +29,16 @@ int main(int argc, char *argv[])
 	int opt;
 	int ret;
 
-	while ((opt = getopt(argc, argv, "hdx46p:i:t:")) != -1) {
+	while ((opt = getopt(argc, argv, "hdvx46p:i:t:")) != -1) {
 		switch (opt) {
 		case 'h':
 			usage(argv[0]);
 			break;
 		case 'd':
 			debug_flag = true;
+			break;
+		case 'v':
+			verbose_flag = true;
 			break;
 		case 'x':
 			packet_dump_flag = true;

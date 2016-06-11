@@ -47,6 +47,7 @@ static inline const port_status_t tracker_status(const struct tracker *t,
 }
 
 /* Prototypes. */
+void tracker_print(const struct tracker *t);
 void tracker_init(struct tracker *t, const unsigned short start_port,
 		const unsigned short end_port, char *const addr);
 void tracker_term(struct tracker *t);

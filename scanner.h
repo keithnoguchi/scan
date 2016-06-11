@@ -10,6 +10,7 @@
 
 /* Command line options/arguments. */
 extern bool debug_flag;
+extern bool verbose_flag;
 extern bool packet_dump_flag;
 extern time_t duration_sec;
 

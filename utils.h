@@ -36,6 +36,21 @@ static inline void warn(const char *const fmt, ...)
 	va_end(ap);
 }
 
+static inline void info(const char *const fmt, ...)
+{
+	extern bool debug_flag, verbose_flag, packet_dump_flag;
+	va_list ap;
+
+	if (verbose_flag == false
+		&& debug_flag == false
+		&& packet_dump_flag == false)
+		return;
+	printf("[info] ");
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
 static inline void debug(const char *const fmt, ...)
 {
 	extern bool debug_flag;
@@ -43,18 +58,7 @@ static inline void debug(const char *const fmt, ...)
 
 	if (debug_flag == false)
 		return;
-
 	printf("[debug] ");
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-
-static inline void info(const char *const fmt, ...)
-{
-	va_list ap;
-
-	printf("[info] ");
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
