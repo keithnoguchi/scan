@@ -13,19 +13,32 @@ extern "C"
 
 TEST_GROUP(TrackerTest)
 {
-	static const unsigned short default_start_port = 1;
-	static const unsigned short default_end_port = 65535;
 	struct tracker tracker;
 
 	void setup()
 	{
-		tracker_init(&tracker, default_start_port, default_end_port);
+		tracker_init(&tracker, 0, 0);
 	}
 	void teardown()
 	{
 		tracker_term(&tracker);
 	}
 };
+
+TEST(TrackerTest, CheckDefaultStartPort)
+{
+	LONGS_EQUAL(1, tracker.start);
+}
+
+TEST(TrackerTest, CheckDefaultEndPort)
+{
+	LONGS_EQUAL(UINT16_MAX, tracker.end);
+}
+
+TEST(TrackerTest, CheckDefaultNextPort)
+{
+	LONGS_EQUAL(1, tracker.next);
+}
 
 TEST(TrackerTest, CheckPortZeroStatus)
 {
@@ -37,12 +50,7 @@ TEST(TrackerTest, CheckPortOneStatus)
 	LONGS_EQUAL(INIT, tracker.status[1]);
 }
 
-TEST(TrackerTest, CheckPort65535Statsu)
+TEST(TrackerTest, CheckPort65535Status)
 {
 	LONGS_EQUAL(INIT, tracker.status[65535]);
-}
-
-TEST(TrackerTest, CheckNextPortIsOne)
-{
-	LONGS_EQUAL(1, tracker.next);
 }
