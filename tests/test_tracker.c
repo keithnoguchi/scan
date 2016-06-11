@@ -65,34 +65,37 @@ TEST(TrackerTest, CheckWrongRangePortBackToDefaultPorts)
 
 TEST(TrackerTest, CheckPortZeroStatus)
 {
-	port_status_t expected = UNKNOWN;
-	LONGS_EQUAL(expected, tracker.status[0]);
+	const port_status_t expected = UNKNOWN;
+	const unsigned short port = 0;
+	LONGS_EQUAL(expected, tracker_status(&tracker, port));
 }
 
 TEST(TrackerTest, CheckPortOneStatus)
 {
-	port_status_t expected = INIT;
-	LONGS_EQUAL(expected, tracker.status[1]);
+	const port_status_t expected = INIT;
+	const unsigned port = 1;
+	LONGS_EQUAL(expected, tracker_status(&tracker, port));
 }
 
 TEST(TrackerTest, CheckPort65535Status)
 {
-	port_status_t expected = INIT;
-	LONGS_EQUAL(expected, tracker.status[65535]);
+	const port_status_t expected = INIT;
+	const unsigned port = 65535;
+	LONGS_EQUAL(expected, tracker_status(&tracker, port));
 }
 
 TEST(TrackerTest, CheckPortOpenStatus)
 {
-	port_status_t expected = OPEN;
-	unsigned short port = 65535;
+	const port_status_t expected = OPEN;
+	const unsigned short port = 65535;
 	tracker_set_open(&tracker, port);
-	LONGS_EQUAL(expected, tracker.status[port]);
+	LONGS_EQUAL(expected, tracker_status(&tracker, port));
 }
 
 TEST(TrackerTest, CheckPortClosedStatus)
 {
-	port_status_t expected = CLOSED;
-	unsigned short port = 65535;
+	const port_status_t expected = CLOSED;
+	const unsigned short port = 65535;
 	tracker_set_closed(&tracker, port);
-	LONGS_EQUAL(expected, tracker.status[port]);
+	LONGS_EQUAL(expected, tracker_status(&tracker, port));
 }

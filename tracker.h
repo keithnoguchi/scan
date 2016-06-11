@@ -33,6 +33,12 @@ static inline void tracker_set_closed(struct tracker *t,
 			t->status[port] = CLOSED;
 }
 
+static inline const port_status_t tracker_status(const struct tracker *t,
+		const unsigned short port)
+{
+	return t->status[port];
+}
+
 /* Prototypes. */
 void tracker_init(struct tracker *t, const unsigned short start_port,
 		const unsigned short end_port);
