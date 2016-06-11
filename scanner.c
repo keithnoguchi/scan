@@ -195,10 +195,7 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 	sc->icounter = sc->ocounter = 0;
 
 	/* Port tracker initialization. */
-	sc->ports.start = start_port;
-	sc->ports.end = end_port;
-	sc->ports.next = sc->ports.start;
-	tracker_init(&sc->ports);
+	tracker_init(&sc->ports, start_port, end_port);
 
 	/* Record the start time. */
 	sc->start_time = time(NULL);

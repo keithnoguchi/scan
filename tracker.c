@@ -2,10 +2,17 @@
 
 #include "tracker.h"
 
-void tracker_init(struct tracker *t)
+void tracker_init(struct tracker *t, const unsigned short start,
+		const unsigned short end)
 {
 	int i;
 
+	/* Member variables. */
+	t->start = start;
+	t->end = end;
+	t->next = t->start;
+
+	/* Reset the port status. */
 	for (i = 0; i < t->start; i++)
 		t->status[i] = UNKNOWN;
 
