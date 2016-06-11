@@ -121,32 +121,8 @@ static int writer(struct scanner *sc)
 
 int scanner4_tcp_init(struct scanner *sc)
 {
-	struct sockaddr_in *sin;
-	struct iphdr *ip;
-	int on = 1;
+	struct iphdr *ip = (struct iphdr *) sc->obuf;
 	int ret;
-
-	ret = setsockopt(sc->rawfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on));
-	if (ret != 0)
-		fatal("setsockopt(IP_HDRINCL)");
-
-	/* Prepare the IP header. */
-	ip = (struct iphdr *) sc->obuf;
-	ip->ihl = 5;
-	ip->version = 4;
-	ip->tos = 0;
-	ip->tot_len = 0;
-	ip->frag_off = 0;
-	ip->ttl = 255;
-	ip->protocol = sc->dst->ai_protocol;
-	ip->check = 0;
-	sin = (struct sockaddr_in *) &sc->src;
-	ip->saddr = sin->sin_addr.s_addr;
-	sin = (struct sockaddr_in *) sc->dst->ai_addr;
-	ip->daddr = sin->sin_addr.s_addr;
-
-	inet_ntop(sc->dst->ai_family, &ip->saddr, addr, sizeof(addr));
-	debug("Send from %s\n", addr);
 
 	/* TCPv4 specific reader/writer. */
 	sc->reader = reader;
