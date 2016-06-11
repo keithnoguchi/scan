@@ -124,7 +124,7 @@ static int writer(struct scanner *sc)
 	return ret;
 }
 
-void scanner6_tcp_init(struct scanner *sc)
+int scanner6_tcp_init(struct scanner *sc)
 {
 	struct sockaddr_in6 *sin;
 	struct in6_pktinfo ipi;
@@ -163,4 +163,6 @@ void scanner6_tcp_init(struct scanner *sc)
 	cdata->length = htonl(tcphdrlen);
 	cdata->buf[0] = cdata->buf[1] = cdata->buf[2] = 0;
 	cdata->nexthdr = sc->dst->ai_protocol;
+
+	return ret;
 }

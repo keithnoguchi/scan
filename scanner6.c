@@ -4,6 +4,7 @@
 
 #include "utils.h"
 #include "scanner.h"
+#include "scanner6_tcp.h"
 
 static char addr[INET6_ADDRSTRLEN];
 
@@ -19,4 +20,15 @@ void scanner6_init_const(struct scanner *sc)
 {
 	/* Address validators. */
 	sc->is_ll_addr = is_ll_addr;
+}
+
+int scanner6_init(struct scanner *sc)
+{
+	switch (sc->dst->ai_protocol) {
+	case IPPROTO_TCP:
+		return scanner6_tcp_init(sc);
+	default:
+		warn("TCP is the only supported protocol in IPv6\n");
+		return -1;
+	}
 }

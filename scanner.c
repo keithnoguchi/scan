@@ -12,7 +12,6 @@
 #include "scanner4.h"
 #include "scanner4_tcp.h"
 #include "scanner6.h"
-#include "scanner6_tcp.h"
 
 /* Command line flags/arguments. */
 bool debug_flag = false;
@@ -206,14 +205,7 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 		}
 		break;
 	case PF_INET6:
-		if (proto == IPPROTO_TCP) {
-			scanner6_tcp_init(sc);
-			ret = 0;
-		} else {
-			warn("TCP is the only supported protocol in IPv6\n");
-			ret = -1;
-		}
-		break;
+		return scanner6_init(sc);
 	default:
 		warn("Unsupported protocol family\n");
 		ret = -1;
