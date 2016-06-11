@@ -5,11 +5,13 @@ LDXXFLAGS = -L/usr/local/lib -lCppUTest
 TARGET = scanner
 TEST_TARGET = tests/test
 TEST_OPS := -c -v
-SRC := scanner.c scanner4.c scanner4_tcp.c \
+SRC := scanner.c \
+	scanner4.c scanner4_tcp.c \
 	scanner6.c scanner6_tcp.c
 OBJ := $(SRC:.c=.o)
 TMP := *~ *.swp a.out **/*~ **/*.swp **/a.out
-DEPS = utils.h scanner.h scanner.h scanner4.h scanner4_tcp.h \
+DEPS = utils.h scanner.h scanner.h \
+       scanner4.h scanner4_tcp.h \
        scanner6.h scanner6_tcp.h
 TEST = tests/test_main.c tests/test_scanner.c
 TEST_OBJ := $(TEST:.c=.o)

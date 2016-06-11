@@ -119,7 +119,7 @@ static int writer(struct scanner *sc)
 	return ret;
 }
 
-void scanner4_tcp_init(struct scanner *sc)
+int scanner4_tcp_init(struct scanner *sc)
 {
 	struct sockaddr_in *sin;
 	struct iphdr *ip;
@@ -169,4 +169,6 @@ void scanner4_tcp_init(struct scanner *sc)
 	cdata->buf = 0;
 	cdata->protocol = sc->dst->ai_protocol;
 	cdata->length = htons(tcphdrlen);
+
+	return ret;
 }
