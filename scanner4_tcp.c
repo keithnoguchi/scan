@@ -163,6 +163,6 @@ void scanner_tcp4_init(struct scanner *sc)
 	cdata->saddr = ip->saddr;
 	cdata->daddr = ip->daddr;
 	cdata->buf = 0;
-	cdata->protocol = ip->protocol;
+	cdata->protocol = sc->dst->ai_protocol;
 	cdata->length = htons(tcphdrlen);
 }

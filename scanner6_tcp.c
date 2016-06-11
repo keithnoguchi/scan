@@ -23,12 +23,12 @@ static int reader(struct scanner *sc)
 	struct tcphdr *tcp;
 	int ret;
 
+	iov.iov_base = sc->ibuf;
+	iov.iov_len = sizeof(sc->ibuf);
 	msg.msg_name = (struct sockaddr *) &addr;
 	msg.msg_namelen = sizeof(addr);
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
-	iov.iov_base = sc->ibuf;
-	iov.iov_len = sizeof(sc->ibuf);
 	ret = recvmsg(sc->rawfd, &msg, 0);
 	if (ret < 0) {
 		if (errno == EAGAIN)
@@ -72,7 +72,7 @@ static unsigned short tcp_checksum(struct scanner *sc, struct tcphdr *tcp)
 	struct cdata {
 		struct in6_addr saddr;
 		struct in6_addr daddr;
-		u_int16_t length;
+		u_int32_t length;
 		u_int8_t buf[3];
 		u_int8_t nexthdr;
 		struct tcphdr tcp;
@@ -148,7 +148,7 @@ void scanner_tcp6_init(struct scanner *sc)
 	struct cdata {
 		struct in6_addr saddr;
 		struct in6_addr daddr;
-		u_int16_t length;
+		u_int32_t length;
 		u_int8_t buf[3];
 		u_int8_t nexthdr;
 		struct tcphdr tcp;
@@ -157,7 +157,7 @@ void scanner_tcp6_init(struct scanner *sc)
 	cdata->saddr = sin->sin6_addr;
 	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
 	cdata->daddr = sin->sin6_addr;
+	cdata->length = htonl(tcphdrlen);
 	cdata->buf[0] = cdata->buf[1] = cdata->buf[2] = 0;
-	cdata->nexthdr = IPPROTO_TCP;
-	cdata->length = htons(tcphdrlen);
+	cdata->nexthdr = sc->dst->ai_protocol;
 }
