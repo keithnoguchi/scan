@@ -11,11 +11,9 @@
 #include "scanner.h"
 
 static const size_t tcphdrlen = 20;
-static char addr[INET6_ADDRSTRLEN];
 
 static int reader(struct scanner *sc)
 {
-	char src[INET6_ADDRSTRLEN];
 	struct sockaddr_in6 *sin;
 	struct sockaddr_in6 addr;
 	struct msghdr msg;
@@ -45,25 +43,27 @@ static int reader(struct scanner *sc)
 	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
 	if (!IN6_ARE_ADDR_EQUAL(&addr.sin6_addr, &sin->sin6_addr)) {
 		debug("Drop packet from non-target host(%s)\n",
-			inet_ntop(AF_INET6, &addr.sin6_addr, src, sizeof(src)));
+			inet_ntop(AF_INET6, &addr.sin6_addr, sc->addr,
+				sc->addrstr_len));
 		return -1;
 	}
 
-	inet_ntop(AF_INET6, &addr.sin6_addr, src, sizeof(src));
+	inet_ntop(AF_INET6, &addr.sin6_addr, sc->addr, sc->addrstr_len);
 	tcp = (struct tcphdr *) sc->ibuf;
 	port = ntohs(tcp->source);
-	debug("Recv from %s:%d\n", src, port);
+	debug("Recv from %s:%d\n", sc->addr, port);
 
 	dump(sc->ibuf, ret);
 	sc->icounter++;
 
 	/* We only care about packet with SA flag on. */
 	if (tcp->syn == 0 || tcp->ack == 0) {
-		debug("Drop packet w/o SYN/ACK from host(%s:%d)\n", src, port);
+		debug("Drop packet w/o SYN/ACK from host(%s:%d)\n",
+				sc->addr, port);
 		return -1;
 	}
 
-	info("Port %d is open on %s\n", port, src);
+	info("Port %d is open on %s\n", port, sc->addr);
 
 	return port;
 }
@@ -85,7 +85,6 @@ static unsigned short tcp_checksum(struct scanner *sc, struct tcphdr *tcp)
 
 static int writer(struct scanner *sc)
 {
-	char dst[INET6_ADDRSTRLEN];
 	struct sockaddr_in6 *sin;
 	struct tcphdr *tcp;
 	int ret;
@@ -117,8 +116,8 @@ static int writer(struct scanner *sc)
 	}
 
 	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
-	inet_ntop(AF_INET6, &sin->sin6_addr, dst, sizeof(dst));
-	debug("Sent to %s:%d\n", dst, ntohs(tcp->dest));
+	inet_ntop(AF_INET6, &sin->sin6_addr, sc->addr, sc->addrstr_len);
+	debug("Sent to %s:%d\n", sc->addr, ntohs(tcp->dest));
 	dump(sc->obuf, sc->olen);
 
 	return ret;
