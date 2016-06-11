@@ -80,8 +80,6 @@ static int reader(struct scanner *sc)
 		return -1;
 	}
 
-	info("Port %d is open on %s\n", port, sc->addr);
-
 	return port;
 }
 

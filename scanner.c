@@ -69,17 +69,20 @@ static int srcaddr(struct scanner *sc, const char *ifname)
 
 static inline void scanner_reader(struct scanner *sc)
 {
+	int port;
+
 	/* Call the Protocol specific reader, if there is. */
 	if (sc->reader)
-		(*sc->reader)(sc);
+		if ((port = (*sc->reader)(sc)) <= 0)
+			return;
+
+	info("Port %d is open on %s\n", port, sc->addr);
 }
 
 static inline void scanner_writer(struct scanner *sc)
 {
-	int ret;
-
 	if (sc->writer)
-		if ((ret = (*sc->writer)(sc)) < 0)
+		if ((*sc->writer)(sc) < 0)
 			return;
 
 	sc->ocounter++;
