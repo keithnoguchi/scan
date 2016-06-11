@@ -17,8 +17,8 @@ struct tracker {
 };
 
 /* Prototypes. */
-void tracker_init(struct tracker *t, const unsigned short start,
-		const unsigned short end);
+void tracker_init(struct tracker *t, const unsigned short start_port,
+		const unsigned short end_port);
 void tracker_term(struct tracker *t);
 
 #endif /* _TRACKER_H */

@@ -54,6 +54,15 @@ TEST(TrackerTest, CheckSpecifiedEndPort)
 	LONGS_EQUAL(expected, tracker.end);
 }
 
+TEST(TrackerTest, CheckWrongRangePortBackToDefaultPorts)
+{
+	unsigned short expected_start = 1;
+	unsigned short expected_end = UINT16_MAX;
+	tracker_init(&tracker, 100, 99);
+	LONGS_EQUAL(expected_start, tracker.start);
+	LONGS_EQUAL(expected_end, tracker.end);
+}
+
 TEST(TrackerTest, CheckPortZeroStatus)
 {
 	LONGS_EQUAL(UNKNOWN, tracker.status[0]);

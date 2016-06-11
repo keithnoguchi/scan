@@ -5,10 +5,15 @@
 static const unsigned short default_start_port = 1;
 static const unsigned short default_end_port = UINT16_MAX;
 
-void tracker_init(struct tracker *t, const unsigned short start,
-		const unsigned short end)
+void tracker_init(struct tracker *t, const unsigned short start_port,
+		const unsigned short end_port)
 {
+	unsigned short start = start_port, end = end_port;
 	int i;
+
+	/* Wrong range back to the default range. */
+	if (end != 0 && start > end)
+		start = end = 0;
 
 	/* Member variables. */
 	t->start = start ? start : default_start_port;
