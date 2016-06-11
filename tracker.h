@@ -28,6 +28,9 @@ static inline void tracker_set_open(struct tracker *t,
 static inline void tracker_set_closed(struct tracker *t,
 		const unsigned short port)
 {
+	if (port)
+		if (t->status[port] == INIT)
+			t->status[port] = CLOSED;
 }
 
 /* Prototypes. */

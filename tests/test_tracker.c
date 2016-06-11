@@ -65,17 +65,20 @@ TEST(TrackerTest, CheckWrongRangePortBackToDefaultPorts)
 
 TEST(TrackerTest, CheckPortZeroStatus)
 {
-	LONGS_EQUAL(UNKNOWN, tracker.status[0]);
+	port_status_t expected = UNKNOWN;
+	LONGS_EQUAL(expected, tracker.status[0]);
 }
 
 TEST(TrackerTest, CheckPortOneStatus)
 {
-	LONGS_EQUAL(INIT, tracker.status[1]);
+	port_status_t expected = INIT;
+	LONGS_EQUAL(expected, tracker.status[1]);
 }
 
 TEST(TrackerTest, CheckPort65535Status)
 {
-	LONGS_EQUAL(INIT, tracker.status[65535]);
+	port_status_t expected = INIT;
+	LONGS_EQUAL(expected, tracker.status[65535]);
 }
 
 TEST(TrackerTest, CheckPortOpenStatus)
@@ -83,5 +86,13 @@ TEST(TrackerTest, CheckPortOpenStatus)
 	port_status_t expected = OPEN;
 	unsigned short port = 65535;
 	tracker_set_open(&tracker, port);
+	LONGS_EQUAL(expected, tracker.status[port]);
+}
+
+TEST(TrackerTest, CheckPortClosedStatus)
+{
+	port_status_t expected = CLOSED;
+	unsigned short port = 65535;
+	tracker_set_closed(&tracker, port);
 	LONGS_EQUAL(expected, tracker.status[port]);
 }
