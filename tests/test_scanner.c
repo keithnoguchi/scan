@@ -6,6 +6,7 @@ extern "C"
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#define __STDC_LIMIT_MACROS
 #include "scanner.h"
 }
 
