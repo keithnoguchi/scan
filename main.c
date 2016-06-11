@@ -8,14 +8,14 @@
 #include "scanner.h"
 
 /* Default variables. */
-static const unsigned short scanner_default_start_port = 1;
-static const unsigned short scanner_default_end_port = 65535;
-static char *const scanner_default_ifname = NULL;
+static const unsigned short default_start_port = 1;
+static const unsigned short default_end_port = 65535;
+static char *const default_ifname = NULL;
 
 static void usage(const char *const progname)
 {
 	const char *const usage = "\
-Usage: %s [-hdx6] [-p port] [-i ifname] [-t sec] destination\n";
+Usage: %s [-hdx46] [-p port] [-i ifname] [-t sec] destination\n";
 
 	fprintf(stderr, usage, progname);
 	exit(EXIT_FAILURE);
@@ -23,9 +23,9 @@ Usage: %s [-hdx6] [-p port] [-i ifname] [-t sec] destination\n";
 
 int main(int argc, char *argv[])
 {
-	unsigned short start_port = scanner_default_start_port;
-	unsigned short end_port = scanner_default_end_port;
-	char *ifname = scanner_default_ifname;
+	unsigned short start_port = default_start_port;
+	unsigned short end_port = default_end_port;
+	char *ifname = default_ifname;
 	int domain = PF_INET;
 	struct scanner sc;
 	char *dstname;
@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 	int opt;
 	int ret;
 
-	while ((opt = getopt(argc, argv, "hdx6p:i:t:")) != -1) {
+	while ((opt = getopt(argc, argv, "hdx46p:i:t:")) != -1) {
 		switch (opt) {
 		case 'h':
 			usage(argv[0]);
@@ -44,12 +44,16 @@ int main(int argc, char *argv[])
 		case 'x':
 			packet_dump_flag = true;
 			break;
+		case '4':
+			domain = PF_INET;
+			break;
 		case '6':
 			domain = PF_INET6;
 			break;
 		case 'p':
 			port = atoi(optarg);
-			if (port <=0 || port > 65535)
+			if (port < default_start_port
+					|| port > default_end_port)
 				fprintf(stderr, "Invalid port, ignored\n");
 			else
 				start_port = end_port = port;
