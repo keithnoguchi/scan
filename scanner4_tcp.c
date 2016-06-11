@@ -29,6 +29,10 @@ static int reader(struct scanner *sc)
 		fatal("recv(3)");
 	}
 
+	/* Ignore packet less than 40(IP + TCP header size) bytes. */
+	if (ret < iphdrlen + tcphdrlen)
+		return -1;
+
 	/* Drop the packet which is not from the destination. */
 	sin = (struct sockaddr_in *) sc->dst->ai_addr;
 	ip = (struct iphdr *) sc->ibuf;
@@ -44,10 +48,6 @@ static int reader(struct scanner *sc)
 	debug("Recv from %s:%d\n", src, port);
 	dump(sc->ibuf, ret);
 	sc->icounter++;
-
-	/* Ignore packet less than 40(IP + TCP header size) bytes. */
-	if (ret < iphdrlen + tcphdrlen)
-		return -1;
 
 	/* We only care about packet with SA flag on. */
 	if (tcp->syn == 0 || tcp->ack == 0) {

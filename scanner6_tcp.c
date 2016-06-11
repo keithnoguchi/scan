@@ -36,6 +36,10 @@ static int reader(struct scanner *sc)
 		fatal("recv(3)");
 	}
 
+	/* Ignore packet less than 20(TCP header size) bytes. */
+	if (ret < tcphdrlen)
+		return -1;
+
 	/* Drop the packet which is not from the destination. */
 	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
 	if (!IN6_ARE_ADDR_EQUAL(&addr.sin6_addr, &sin->sin6_addr)) {
@@ -48,12 +52,9 @@ static int reader(struct scanner *sc)
 	tcp = (struct tcphdr *) sc->ibuf;
 	port = ntohs(tcp->source);
 	debug("Recv from %s:%d\n", src, port);
+
 	dump(sc->ibuf, ret);
 	sc->icounter++;
-
-	/* Ignore packet less than 20(TCP header size) bytes. */
-	if (ret < tcphdrlen)
-		return -1;
 
 	/* We only care about packet with SA flag on. */
 	if (tcp->syn == 0 || tcp->ack == 0) {
@@ -128,11 +129,6 @@ void scanner_tcp6_init(struct scanner *sc)
 	struct in6_pktinfo ipi;
 	int on = 1;
 	int ret;
-
-	ret = setsockopt(sc->rawfd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
-			sizeof(on));
-	if (ret != 0)
-		fatal("setsockopt(IPV6_RECVPKTINFO)");
 
 	sin = (struct sockaddr_in6 *) &sc->src;
 	ipi.ipi6_addr = sin->sin6_addr;
