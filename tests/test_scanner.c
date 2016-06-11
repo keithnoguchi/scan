@@ -11,7 +11,7 @@ extern "C"
 #include "scanner.h"
 }
 
-TEST_GROUP(ScannerTest)
+TEST_GROUP(Scanner)
 {
 	static const int start_port = 22;
 	static const int end_port = 69;
@@ -28,17 +28,17 @@ TEST_GROUP(ScannerTest)
 	}
 };
 
-TEST(ScannerTest, CheckTCPv4InitStartPort)
+TEST(Scanner, CheckTCPv4InitStartPort)
 {
 	LONGS_EQUAL(start_port, sc.ports.start);
 }
 
-TEST(ScannerTest, CheckTCPv4InitEndPort)
+TEST(Scanner, CheckTCPv4InitEndPort)
 {
 	LONGS_EQUAL(end_port, sc.ports.end);
 }
 
-TEST(ScannerTest, CheckTCPv4SourceAddr)
+TEST(Scanner, CheckTCPv4SourceAddr)
 {
 	struct sockaddr_in *sin = (struct sockaddr_in *)&sc.src;
 	struct in_addr expected;

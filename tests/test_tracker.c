@@ -11,7 +11,7 @@ extern "C"
 #include "tracker.h"
 }
 
-TEST_GROUP(TrackerTest)
+TEST_GROUP(Tracker)
 {
 	struct tracker tracker;
 
@@ -25,36 +25,36 @@ TEST_GROUP(TrackerTest)
 	}
 };
 
-TEST(TrackerTest, CheckDefaultStartPort)
+TEST(Tracker, CheckDefaultStartPort)
 {
 	LONGS_EQUAL(1, tracker.start);
 }
 
-TEST(TrackerTest, CheckDefaultEndPort)
+TEST(Tracker, CheckDefaultEndPort)
 {
 	LONGS_EQUAL(UINT16_MAX, tracker.end);
 }
 
-TEST(TrackerTest, CheckDefaultNextPort)
+TEST(Tracker, CheckDefaultNextPort)
 {
 	LONGS_EQUAL(1, tracker.next);
 }
 
-TEST(TrackerTest, CheckSpecifiedStartPort)
+TEST(Tracker, CheckSpecifiedStartPort)
 {
 	unsigned short expected = 99;
 	tracker_init(&tracker, expected, 0);
 	LONGS_EQUAL(expected, tracker.start);
 }
 
-TEST(TrackerTest, CheckSpecifiedEndPort)
+TEST(Tracker, CheckSpecifiedEndPort)
 {
 	unsigned short expected = 100;
 	tracker_init(&tracker, 0, expected);
 	LONGS_EQUAL(expected, tracker.end);
 }
 
-TEST(TrackerTest, CheckWrongRangePortBackToDefaultPorts)
+TEST(Tracker, CheckWrongRangePortBackToDefaultPorts)
 {
 	unsigned short expected_start = 1;
 	unsigned short expected_end = UINT16_MAX;
@@ -63,28 +63,28 @@ TEST(TrackerTest, CheckWrongRangePortBackToDefaultPorts)
 	LONGS_EQUAL(expected_end, tracker.end);
 }
 
-TEST(TrackerTest, CheckPortZeroStatus)
+TEST(Tracker, CheckPortZeroStatus)
 {
 	const port_status_t expected = UNKNOWN;
 	const unsigned short port = 0;
 	LONGS_EQUAL(expected, tracker_status(&tracker, port));
 }
 
-TEST(TrackerTest, CheckPortOneStatus)
+TEST(Tracker, CheckPortOneStatus)
 {
 	const port_status_t expected = INIT;
 	const unsigned port = 1;
 	LONGS_EQUAL(expected, tracker_status(&tracker, port));
 }
 
-TEST(TrackerTest, CheckPort65535Status)
+TEST(Tracker, CheckPort65535Status)
 {
 	const port_status_t expected = INIT;
 	const unsigned port = 65535;
 	LONGS_EQUAL(expected, tracker_status(&tracker, port));
 }
 
-TEST(TrackerTest, CheckPortOpenStatus)
+TEST(Tracker, CheckPortOpenStatus)
 {
 	const port_status_t expected = OPEN;
 	const unsigned short port = 65535;
@@ -92,7 +92,7 @@ TEST(TrackerTest, CheckPortOpenStatus)
 	LONGS_EQUAL(expected, tracker_status(&tracker, port));
 }
 
-TEST(TrackerTest, CheckPortClosedStatus)
+TEST(Tracker, CheckPortClosedStatus)
 {
 	const port_status_t expected = CLOSED;
 	const unsigned short port = 65535;
