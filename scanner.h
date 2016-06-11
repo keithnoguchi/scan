@@ -25,8 +25,8 @@ struct scanner {
 	/* Raw socket for the data packets. */
 	int rawfd;
 
-	/* Start time. */
-	time_t start_time;
+	/* Start and last print time. */
+	time_t start_time, last_print_time;
 
 	/* Read/write buffers. */
 	unsigned char ibuf[BUFSIZ];

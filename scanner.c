@@ -19,7 +19,7 @@ bool packet_dump_flag = false;
 time_t duration_sec = 10;
 
 /* Epoll timeout millisecond. */
-static const int epoll_timeout_millisec = 100;
+static const int epoll_timeout_millisec = 500;
 
 static inline bool is_valid_address(struct scanner *sc, struct ifaddrs *ifa)
 {
@@ -101,18 +101,30 @@ static inline void scanner_writer(struct scanner *sc)
 	}
 }
 
-int scanner_wait(struct scanner *sc)
+static int time_check(struct scanner *sc)
 {
-	time_t now;
-	int nfds;
+	time_t now = time(NULL);
 
-	/* We've complete the scanning. */
-	now = time(NULL);
 	if (now - sc->start_time >= duration_sec) {
 		info("Completed the scanning\n");
 		tracker_print(&sc->tracker);
+
 		return 0;
+	} else if (now - sc->last_print_time >= 1) {
+		sc->last_print_time = now;
+		debug("tx: %d, rx: %d\n", sc->ocounter, sc->icounter);
+		output(".");
 	}
+	return 1;
+}
+
+int scanner_wait(struct scanner *sc)
+{
+	int nfds;
+
+	/* We've complete the scanning. */
+	if (time_check(sc) == 0)
+		return 0;
 
 	/* Wait for the event, or timeout after epoll_timeout milliseconds. */
 	nfds = epoll_wait(sc->eventfd, &sc->ev, 1, epoll_timeout_millisec);
@@ -128,7 +140,6 @@ void scanner_exec(struct scanner *sc)
 		scanner_reader(sc);
 	else if (sc->ev.events & EPOLLOUT)
 		scanner_writer(sc);
-	debug("tx: %d, rx: %d\n", sc->ocounter, sc->icounter);
 }
 
 int scanner_init(struct scanner *sc, const char *name, int family,
@@ -200,7 +211,7 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 	tracker_init(&sc->tracker, start_port, end_port, sc->addr);
 
 	/* Record the start time. */
-	sc->start_time = time(NULL);
+	sc->start_time = sc->last_print_time = time(NULL);
 
 	switch (family) {
 	case PF_INET:

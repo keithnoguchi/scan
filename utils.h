@@ -64,6 +64,19 @@ static inline void debug(const char *const fmt, ...)
 	va_end(ap);
 }
 
+static inline int output(const char *const fmt, ...)
+{
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = vprintf(fmt, ap);
+	va_end(ap);
+	fflush(stdout);
+
+	return ret;
+}
+
 static inline void dump(const unsigned char *const data_buffer,
 		const unsigned int length)
 {
