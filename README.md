@@ -24,4 +24,10 @@ We need to be as root for RAW socket.
 $ make test
 ```
 
+## How to play asciicast locally
+
+```
+$ asciinema play scanner.json
+```
+
 Happy hacking!
