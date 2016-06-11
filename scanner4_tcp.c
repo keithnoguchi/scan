@@ -12,6 +12,7 @@
 
 static const size_t iphdrlen = 20;
 static const size_t tcphdrlen = 20;
+static char addr[INET_ADDRSTRLEN];
 
 static int reader(struct scanner *sc)
 {
@@ -127,11 +128,7 @@ void scanner_tcp4_init(struct scanner *sc)
 
 	ret = setsockopt(sc->rawfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on));
 	if (ret != 0)
-		fatal("setsockopt(3)");
-
-	/* TCPv4 specific reader/writer. */
-	sc->reader = reader;
-	sc->writer = writer;
+		fatal("setsockopt(IP_HDRINCL)");
 
 	/* Prepare the IP header. */
 	ip = (struct iphdr *) sc->obuf;
@@ -147,6 +144,13 @@ void scanner_tcp4_init(struct scanner *sc)
 	ip->saddr = sin->sin_addr.s_addr;
 	sin = (struct sockaddr_in *) sc->dst->ai_addr;
 	ip->daddr = sin->sin_addr.s_addr;
+
+	inet_ntop(sc->dst->ai_family, &ip->saddr, addr, sizeof(addr));
+	debug("Send from %s\n", addr);
+
+	/* TCPv4 specific reader/writer. */
+	sc->reader = reader;
+	sc->writer = writer;
 
 	/* We send both IP and TCP header portion. */
 	sc->olen = sizeof(struct iphdr) + sizeof(struct tcphdr);

@@ -143,6 +143,9 @@ void scanner_tcp6_init(struct scanner *sc)
 	if (ret != 0)
 		fatal("setsockopt(IPV6_PKTINFO)");
 
+	inet_ntop(sc->dst->ai_family, &sin->sin6_addr, addr, sizeof(addr));
+	debug("Send from %s\n", addr);
+
 	/* Address validators. */
 	sc->is_ll_addr = is_ll_addr;
 
