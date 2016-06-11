@@ -1,5 +1,5 @@
 SUDO := sudo
-CFLAGS = -I. -g
+CFLAGS = -I. -g -D_GNU_SOURCE
 CXXFLAGS = -I. -I/usr/local/include
 LDXXFLAGS = -L/usr/local/lib -lCppUTest
 TARGET = scanner

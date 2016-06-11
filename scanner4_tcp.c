@@ -25,7 +25,7 @@ static int reader(struct scanner *sc)
 	ret = recv(sc->rawfd, sc->ibuf, sizeof(sc->ibuf), 0);
 	if (ret < 0) {
 		if (errno == EAGAIN)
-			return;
+			return 0;
 		fatal("recv(3)");
 	}
 
@@ -148,7 +148,7 @@ void scanner_tcp4_init(struct scanner *sc)
 	sin = (struct sockaddr_in *) sc->dst->ai_addr;
 	ip->daddr = sin->sin_addr.s_addr;
 
-	/* We only send TCP/IP header portion. */
+	/* We send both IP and TCP header portion. */
 	sc->olen = sizeof(struct iphdr) + sizeof(struct tcphdr);
 
 	/* Prepare the checksum buffer. */

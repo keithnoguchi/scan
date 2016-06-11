@@ -80,14 +80,10 @@ static int writer(struct scanner *sc)
 	char dst[INET6_ADDRSTRLEN];
 	struct sockaddr_in6 *sin;
 	struct tcphdr *tcp;
-	struct ip6_hdr *ip;
 	int ret;
 
-	/* IP header. */
-	ip = (struct ip6_hdr *) sc->obuf;
-
 	/* TCP header. */
-	tcp = (struct tcphdr *)(sc->obuf + iphdrlen);
+	tcp = (struct tcphdr *) sc->obuf;
 	tcp->source = htons(1024);
 	tcp->dest = htons(sc->next_port);
 	tcp->seq = 0;
@@ -112,7 +108,8 @@ static int writer(struct scanner *sc)
 		return -1;
 	}
 
-	inet_ntop(AF_INET6, &ip->ip6_dst, dst, sizeof(dst));
+	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
+	inet_ntop(AF_INET6, &sin->sin6_addr, dst, sizeof(dst));
 	debug("Sent to %s:%d\n", dst, ntohs(tcp->dest));
 	dump(sc->obuf, sc->olen);
 
@@ -122,32 +119,28 @@ static int writer(struct scanner *sc)
 void scanner_tcp6_init(struct scanner *sc)
 {
 	struct sockaddr_in6 *sin;
-	struct ip6_hdr *ip;
+	struct in6_pktinfo ipi;
 	int on = 1;
 	int ret;
 
 	ret = setsockopt(sc->rawfd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
 			sizeof(on));
 	if (ret != 0)
-		fatal("setsockopt(3)");
+		fatal("setsockopt(IPV6_RECVPKTINFO)");
+
+	sin = (struct sockaddr_in6 *) &sc->src;
+	ipi.ipi6_addr = sin->sin6_addr;
+	ret = setsockopt(sc->rawfd, IPPROTO_IPV6, IPV6_PKTINFO, &ipi,
+			sizeof(ipi));
+	if (ret != 0)
+		fatal("setsockopt(IPV6_PKTINFO)");
 
 	/* TCPv6 specific reader/writer. */
 	sc->reader = reader;
 	sc->writer = writer;
 
-	/* Prepare the IP header. */
-	ip = (struct ip6_hdr *) sc->obuf;
-	ip->ip6_vfc = 6 << 4;
-	ip->ip6_plen = htons(tcphdrlen);
-	ip->ip6_nxt = sc->dst->ai_protocol;
-	ip->ip6_hlim = 255;
-	sin = (struct sockaddr_in6 *) &sc->src;
-	memcpy(&ip->ip6_src, &sin->sin6_addr, sizeof(struct in6_addr));
-	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
-	memcpy(&ip->ip6_dst, &sin->sin6_addr, sizeof(struct in6_addr));
-
-	/* We only send TCP/IP header portion. */
-	sc->olen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
+	/* We only send TCP header portion. */
+	sc->olen = sizeof(struct tcphdr);
 
 	/* Prepare the checksum buffer. */
 	struct cdata {
@@ -158,9 +151,11 @@ void scanner_tcp6_init(struct scanner *sc)
 		u_int8_t nexthdr;
 		struct tcphdr tcp;
 	} *cdata = (struct cdata *) sc->cbuf;
-	memcpy(&cdata->saddr, &ip->ip6_src, sizeof(struct in6_addr));
-	memcpy(&cdata->daddr, &ip->ip6_dst, sizeof(struct in6_addr));
+	sin = (struct sockaddr_in6 *) &sc->src;
+	cdata->saddr = sin->sin6_addr;
+	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
+	cdata->daddr = sin->sin6_addr;
 	cdata->buf[0] = cdata->buf[1] = cdata->buf[2] = 0;
-	cdata->nexthdr = ip->ip6_nxt;
+	cdata->nexthdr = IPPROTO_TCP;
 	cdata->length = htons(iphdrlen);
 }
