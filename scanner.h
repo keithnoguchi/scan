@@ -12,6 +12,19 @@ extern bool debug_flag;
 extern bool packet_dump_flag;
 extern time_t duration_sec;
 
+/* Port tracker. */
+struct tracker {
+	/* Start and end of the scanned port. */
+	unsigned short start;
+	unsigned short end;
+
+	/* Port tracker. */
+	unsigned short next;
+
+	/* Open port status. */
+	bool status[65535];
+};
+
 /* Scanner manager. */
 struct scanner {
 	/* Event manager. */
@@ -37,9 +50,7 @@ struct scanner {
 	char *addr;
 
 	/* Scanning port related info. */
-	int next_port;
-	int start_port;
-	int end_port;
+	struct tracker ports;
 
 	/* Packet counters. */
 	size_t icounter;

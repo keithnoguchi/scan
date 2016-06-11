@@ -85,11 +85,11 @@ static inline void scanner_writer(struct scanner *sc)
 		if ((*sc->writer)(sc) < 0)
 			return;
 
-	sc->ocounter++;
-	debug("Sent to %s:%d\n", sc->addr, sc->next_port);
+	debug("Sent to %s:%d\n", sc->addr, sc->ports.next);
 	dump(sc->obuf, sc->olen);
+	sc->ocounter++;
 
-	if (++sc->next_port > sc->end_port) {
+	if (sc->ports.next++ == sc->ports.end) {
 		/* Disable writer event. */
 		epoll_ctl(sc->eventfd, EPOLL_CTL_DEL, sc->rawfd, NULL);
 		sc->ev.events = EPOLLIN;
@@ -193,9 +193,9 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 
 	/* Member variable initialization. */
 	sc->icounter = sc->ocounter = 0;
-	sc->start_port = start_port;
-	sc->end_port = end_port;
-	sc->next_port = sc->start_port;
+	sc->ports.start = start_port;
+	sc->ports.end = end_port;
+	sc->ports.next = sc->ports.start;
 
 	/* Record the start time. */
 	sc->start_time = time(NULL);
