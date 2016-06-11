@@ -15,7 +15,7 @@ static bool is_ll_addr(struct scanner *sc, const struct sockaddr *sa)
 	return IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr);
 }
 
-void scanner6_init(struct scanner *sc)
+void scanner6_init_const(struct scanner *sc)
 {
 	/* Address validators. */
 	sc->is_ll_addr = is_ll_addr;

@@ -134,13 +134,13 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 	memset(sc, 0, sizeof(struct scanner));
 	sc->eventfd = sc->rawfd = -1;
 
-	/* Generic Protocol family initialization. */
+	/* Initialize Protocol family constants. */
 	switch (family) {
 	case PF_INET:
-		scanner4_init(sc);
+		scanner4_init_const(sc);
 		break;
 	case PF_INET6:
-		scanner6_init(sc);
+		scanner6_init_const(sc);
 		break;
 	default:
 		break;
