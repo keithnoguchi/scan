@@ -52,7 +52,7 @@ static int reader(struct scanner *sc)
 		fatal("recv(3)");
 	}
 
-	/* Ignore packet less than 20(TCP header size) bytes. */
+	/* Ignore packet less than 20(TCP header) bytes. */
 	if (ret < tcphdrlen)
 		return -1;
 

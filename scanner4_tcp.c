@@ -45,7 +45,7 @@ static int reader(struct scanner *sc)
 		fatal("recv(3)");
 	}
 
-	/* Ignore packet less than 40(IP + TCP header size) bytes. */
+	/* Ignore packet less than 40(IP + TCP header) bytes. */
 	if (ret < iphdrlen + tcphdrlen)
 		return -1;
 
