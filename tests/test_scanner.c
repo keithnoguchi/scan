@@ -30,19 +30,19 @@ TEST_GROUP(ScannerTest)
 
 TEST(ScannerTest, CheckTCPv4InitStartPort)
 {
-	LONGS_EQUAL(sc.ports.start, start_port);
+	LONGS_EQUAL(start_port, sc.ports.start);
 }
 
 TEST(ScannerTest, CheckTCPv4InitEndPort)
 {
-	LONGS_EQUAL(sc.ports.end, end_port);
+	LONGS_EQUAL(end_port, sc.ports.end);
 }
 
 TEST(ScannerTest, CheckTCPv4SourceAddr)
 {
 	struct sockaddr_in *sin = (struct sockaddr_in *)&sc.src;
-	struct in_addr addr;
-	inet_aton("127.0.0.1", &addr);
+	struct in_addr expected;
 
-	LONGS_EQUAL(sin->sin_addr.s_addr, addr.s_addr);
+	inet_aton("127.0.0.1", &expected);
+	LONGS_EQUAL(expected.s_addr, sin->sin_addr.s_addr);
 }

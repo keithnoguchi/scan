@@ -29,15 +29,20 @@ TEST_GROUP(TrackerTest)
 
 TEST(TrackerTest, CheckPortZeroStatus)
 {
-	LONGS_EQUAL(tracker.status[0], UNKNOWN);
+	LONGS_EQUAL(UNKNOWN, tracker.status[0]);
 }
 
 TEST(TrackerTest, CheckPortOneStatus)
 {
-	LONGS_EQUAL(tracker.status[1], INIT);
+	LONGS_EQUAL(INIT, tracker.status[1]);
 }
 
 TEST(TrackerTest, CheckPort65535Statsu)
 {
-	LONGS_EQUAL(tracker.status[65535], INIT);
+	LONGS_EQUAL(INIT, tracker.status[65535]);
+}
+
+TEST(TrackerTest, CheckNextPortIsOne)
+{
+	LONGS_EQUAL(1, tracker.next);
 }
