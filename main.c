@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include <netinet/in.h>
@@ -9,7 +10,7 @@
 
 /* Default variables. */
 static const unsigned short default_start_port = 1;
-static const unsigned short default_end_port = 65535;
+static const unsigned short default_end_port = UINT16_MAX;
 static char *const default_ifname = NULL;
 
 static void usage(const char *const progname)
