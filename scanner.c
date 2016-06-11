@@ -20,6 +20,13 @@ time_t duration_sec = 10;
 /* Epoll timeout millisecond. */
 static const int epoll_timeout_millisec = 100;
 
+static inline bool is_valid_address(struct scanner *sc, struct ifaddrs *ifa)
+{
+	if (ifa->ifa_addr == NULL)
+		return false;
+	return sc->valid_addr ? (*sc->valid_addr)(sc, ifa->ifa_addr) : true;
+}
+
 static int srcaddr(struct scanner *sc, const char *ifname)
 {
 	struct ifaddrs *addrs, *ifa;
@@ -37,9 +44,8 @@ static int srcaddr(struct scanner *sc, const char *ifname)
 						&& (ifa->ifa_flags
 							& IFF_LOOPBACK))
 						continue;
-					if (ifa->ifa_addr)
-						memcpy(&sc->src,
-							ifa->ifa_addr,
+					if (is_valid_address(sc, ifa))
+						memcpy(&sc->src, ifa->ifa_addr,
 							sc->dst->ai_addrlen);
 				}
 
