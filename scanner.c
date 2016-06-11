@@ -92,7 +92,6 @@ static inline void scanner_writer(struct scanner *sc)
 
 	if (sc->tracker.next++ == sc->tracker.end) {
 		/* Disable writer event. */
-		epoll_ctl(sc->eventfd, EPOLL_CTL_DEL, sc->rawfd, NULL);
 		sc->ev.events = EPOLLIN;
 		sc->ev.data.fd = sc->rawfd;
 		sc->ev.data.ptr = (void *)sc;
