@@ -3,6 +3,7 @@
 
 #include <time.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
@@ -22,7 +23,7 @@ struct tracker {
 	unsigned short next;
 
 	/* Open port status. */
-	bool status[65535];
+	bool status[UINT16_MAX];
 };
 
 /* Scanner manager. */

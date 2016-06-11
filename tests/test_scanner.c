@@ -28,12 +28,12 @@ TEST_GROUP(ScannerTest)
 
 TEST(ScannerTest, CheckTCPv4InitStartPort)
 {
-	LONGS_EQUAL(sc.start_port, start_port);
+	LONGS_EQUAL(sc.ports.start, start_port);
 }
 
 TEST(ScannerTest, CheckTCPv4InitEndPort)
 {
-	LONGS_EQUAL(sc.end_port, end_port);
+	LONGS_EQUAL(sc.ports.end, end_port);
 }
 
 TEST(ScannerTest, CheckTCPv4SourceAddr)
