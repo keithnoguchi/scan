@@ -6,15 +6,15 @@ TARGET = scanner
 TARGET_OBJ = main.o
 TEST_TARGET = tests/test
 TEST_OPS := -c -v
-SRC := scanner.c \
+SRC := scanner.c tracker.c \
 	scanner4.c scanner4_tcp.c \
 	scanner6.c scanner6_tcp.c
 OBJ := $(SRC:.c=.o)
 TMP := *~ *.swp a.out **/*~ **/*.swp **/a.out
-DEPS = utils.h scanner.h scanner.h \
+DEPS = utils.h scanner.h tracker.h \
        scanner4.h scanner4_tcp.h \
        scanner6.h scanner6_tcp.h
-TEST = tests/test_main.c tests/test_scanner.c
+TEST = tests/test_main.c tests/test_scanner.c tests/test_tracker.c
 TEST_OBJ := $(TEST:.c=.o)
 
 .PHONY: all test clean

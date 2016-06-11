@@ -20,14 +20,6 @@ time_t duration_sec = 10;
 /* Epoll timeout millisecond. */
 static const int epoll_timeout_millisec = 100;
 
-static void init_port_tracker(struct tracker *t)
-{
-	int i;
-
-	for (i = t->start; i <= t->end; i++)
-		t->status[i] = UNKNOWN;
-}
-
 static inline bool is_valid_address(struct scanner *sc, struct ifaddrs *ifa)
 {
 	if (ifa->ifa_addr == NULL)
@@ -201,9 +193,12 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 
 	/* Member variable initialization. */
 	sc->icounter = sc->ocounter = 0;
+
+	/* Port tracker initialization. */
 	sc->ports.start = start_port;
 	sc->ports.end = end_port;
 	sc->ports.next = sc->ports.start;
+	tracker_init(&sc->ports);
 
 	/* Record the start time. */
 	sc->start_time = time(NULL);
@@ -224,6 +219,7 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 
 void scanner_term(struct scanner *sc)
 {
+	tracker_term(&sc->ports);
 	if (sc->dst != NULL) {
 		freeaddrinfo(sc->dst);
 		sc->dst = NULL;
