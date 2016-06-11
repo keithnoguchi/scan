@@ -11,7 +11,7 @@
 static void usage(const char *const progname)
 {
 	const char *const usage = "\
-Usage: %s [-hdvx46] [-p port] [-i ifname] [-t sec] destination\n";
+Usage: %s [-dhuvx46] [-p port] [-i ifname] [-t sec] destination\n";
 
 	fprintf(stderr, usage, progname);
 	exit(EXIT_FAILURE);
@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
 	unsigned short start_port = 0;
 	unsigned short end_port = 0;
 	char *ifname = NULL;
+	int proto = IPPROTO_TCP;
 	int domain = PF_INET;
 	struct scanner sc;
 	char *dstname;
@@ -29,13 +30,16 @@ int main(int argc, char *argv[])
 	int opt;
 	int ret;
 
-	while ((opt = getopt(argc, argv, "hdvx46p:i:t:")) != -1) {
+	while ((opt = getopt(argc, argv, "dhuvx46p:i:t:")) != -1) {
 		switch (opt) {
+		case 'd':
+			debug_flag = true;
+			break;
 		case 'h':
 			usage(argv[0]);
 			break;
-		case 'd':
-			debug_flag = true;
+		case 'u':
+			proto = IPPROTO_UDP;
 			break;
 		case 'v':
 			verbose_flag = true;
@@ -73,8 +77,8 @@ int main(int argc, char *argv[])
 
 	/* Initialize the scanner with the hostname, address family,
 	 * and the protocol. */
-	ret = scanner_init(&sc, dstname, domain, IPPROTO_TCP, start_port,
-			end_port, ifname);
+	ret = scanner_init(&sc, dstname, domain, proto,
+			start_port, end_port, ifname);
 	if (ret == -1)
 		exit(EXIT_FAILURE);
 

@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "scanner.h"
 #include "scanner4_tcp.h"
+#include "scanner4_udp.h"
 
 static char addr[INET_ADDRSTRLEN];
 
@@ -48,6 +49,9 @@ int scanner4_init(struct scanner *sc)
 	switch (sc->dst->ai_protocol) {
 	case IPPROTO_TCP:
 		ret = scanner4_tcp_init(sc);
+		break;
+	case IPPROTO_UDP:
+		ret = scanner4_udp_init(sc);
 		break;
 	default:
 		warn("TCP is the only supported protocol in IPv4\n");
