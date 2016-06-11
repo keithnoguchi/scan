@@ -124,7 +124,7 @@ static int writer(struct scanner *sc)
 	return ret;
 }
 
-void scanner_tcp6_init(struct scanner *sc)
+void scanner6_tcp_init(struct scanner *sc)
 {
 	struct sockaddr_in6 *sin;
 	struct in6_pktinfo ipi;

@@ -194,7 +194,7 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 	switch (family) {
 	case PF_INET:
 		if (proto == IPPROTO_TCP) {
-			scanner_tcp4_init(sc);
+			scanner4_tcp_init(sc);
 			ret = 0;
 		} else {
 			warn("TCP is the only supported protocol in IPv4\n");
@@ -203,7 +203,7 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 		break;
 	case PF_INET6:
 		if (proto == IPPROTO_TCP) {
-			scanner_tcp6_init(sc);
+			scanner6_tcp_init(sc);
 			ret = 0;
 		} else {
 			warn("TCP is the only supported protocol in IPv6\n");
