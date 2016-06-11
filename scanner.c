@@ -9,6 +9,7 @@
 
 #include "utils.h"
 #include "scanner.h"
+#include "scanner4.h"
 #include "scanner4_tcp.h"
 #include "scanner6.h"
 #include "scanner6_tcp.h"
@@ -135,6 +136,9 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 
 	/* Generic Protocol family initialization. */
 	switch (family) {
+	case PF_INET:
+		scanner4_init(sc);
+		break;
 	case PF_INET6:
 		scanner6_init(sc);
 		break;
