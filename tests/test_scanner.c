@@ -2,11 +2,15 @@
 
 extern "C"
 {
+#include <stdint.h>
+#ifndef UINT16_MAX
+#define UINT16_MAX 65535
+#endif /* !UINT16_MAX */
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#define __STDC_LIMIT_MACROS
 #include "scanner.h"
 }
 
