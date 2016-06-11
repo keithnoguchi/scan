@@ -44,11 +44,11 @@ static int reader(struct scanner *sc)
 	if (!IN6_ARE_ADDR_EQUAL(&addr.sin6_addr, &sin->sin6_addr)) {
 		debug("Drop packet from non-target host(%s)\n",
 			inet_ntop(AF_INET6, &addr.sin6_addr, sc->addr,
-				sc->addrstr_len));
+				INET6_ADDRSTRLEN));
 		return -1;
 	}
 
-	inet_ntop(AF_INET6, &addr.sin6_addr, sc->addr, sc->addrstr_len);
+	inet_ntop(AF_INET6, &addr.sin6_addr, sc->addr, INET6_ADDRSTRLEN);
 	tcp = (struct tcphdr *) sc->ibuf;
 	port = ntohs(tcp->source);
 	debug("Recv from %s:%d\n", sc->addr, port);
@@ -116,7 +116,7 @@ static int writer(struct scanner *sc)
 	}
 
 	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
-	inet_ntop(AF_INET6, &sin->sin6_addr, sc->addr, sc->addrstr_len);
+	inet_ntop(AF_INET6, &sin->sin6_addr, sc->addr, INET6_ADDRSTRLEN);
 	debug("Sent to %s:%d\n", sc->addr, ntohs(tcp->dest));
 	dump(sc->obuf, sc->olen);
 

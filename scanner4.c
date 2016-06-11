@@ -13,7 +13,6 @@ static char addr[INET_ADDRSTRLEN];
 
 void scanner4_init_const(struct scanner *sc)
 {
-	sc->addrstr_len = INET_ADDRSTRLEN;
 	sc->addr = addr;
 }
 
@@ -43,7 +42,7 @@ int scanner4_init(struct scanner *sc)
 	sin = (struct sockaddr_in *) sc->dst->ai_addr;
 	ip->daddr = sin->sin_addr.s_addr;
 
-	inet_ntop(sc->dst->ai_family, &ip->saddr, sc->addr, sc->addrstr_len);
+	inet_ntop(sc->dst->ai_family, &ip->saddr, sc->addr, INET_ADDRSTRLEN);
 	debug("Send from %s\n", sc->addr);
 
 	switch (sc->dst->ai_protocol) {

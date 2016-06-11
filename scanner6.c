@@ -15,14 +15,14 @@ static bool is_ll_addr(struct scanner *sc, const struct sockaddr *sa)
 {
 	struct sockaddr_in6 *sin = (struct sockaddr_in6 *) sa;
 	inet_ntop(sc->dst->ai_family, &sin->sin6_addr, sc->addr,
-			sc->addrstr_len);
+			INET6_ADDRSTRLEN);
 	debug("scanner6_is_ll_addr(%s)\n", sc->addr);
 	return IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr);
 }
 
 void scanner6_init_const(struct scanner *sc)
 {
-	sc->addrstr_len = INET6_ADDRSTRLEN;
+	/* Address string buffer. */
 	sc->addr = addr;
 
 	/* Address validators. */
@@ -43,7 +43,7 @@ int scanner6_init(struct scanner *sc)
 		fatal("setsockopt(IPV6_PKTINFO)");
 
 	inet_ntop(sc->dst->ai_family, &sin->sin6_addr, sc->addr,
-			sc->addrstr_len);
+			INET6_ADDRSTRLEN);
 	debug("Send from %s\n", sc->addr);
 
 	switch (sc->dst->ai_protocol) {

@@ -34,7 +34,6 @@ struct scanner {
 	struct addrinfo *dst;
 
 	/* Address string buffer. */
-	size_t addrstr_len;
 	char *addr;
 
 	/* Scanning port related info. */

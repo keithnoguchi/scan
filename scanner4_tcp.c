@@ -38,11 +38,11 @@ static int reader(struct scanner *sc)
 	if (ip->saddr != sin->sin_addr.s_addr) {
 		debug("Drop packet from non-target host(%s)\n",
 			inet_ntop(AF_INET, &ip->saddr, sc->addr,
-				sc->addrstr_len));
+				INET_ADDRSTRLEN));
 		return -1;
 	}
 
-	inet_ntop(AF_INET, &ip->saddr, sc->addr, sc->addrstr_len);
+	inet_ntop(AF_INET, &ip->saddr, sc->addr, INET_ADDRSTRLEN);
 	tcp = (struct tcphdr *) (ip + 1);
 	port = ntohs(tcp->source);
 	debug("Recv from %s:%d\n", sc->addr, port);
@@ -111,7 +111,7 @@ static int writer(struct scanner *sc)
 		return -1;
 	}
 
-	inet_ntop(AF_INET, &ip->daddr, sc->addr, sc->addrstr_len);
+	inet_ntop(AF_INET, &ip->daddr, sc->addr, INET_ADDRSTRLEN);
 	debug("Sent to %s:%d\n", sc->addr, ntohs(tcp->dest));
 	dump(sc->obuf, sc->olen);
 
