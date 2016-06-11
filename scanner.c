@@ -50,15 +50,6 @@ static int srcaddr(struct scanner *sc, const char *ifname)
 
 static inline void scanner_reader(struct scanner *sc)
 {
-	int ret;
-
-	ret = recv(sc->rawfd, sc->ibuf, sizeof(sc->ibuf), 0);
-	if (ret < 0) {
-		if (errno == EAGAIN)
-			return;
-		fatal("recv(3)");
-	}
-
 	/* Call the Protocol specific reader, if there is. */
 	if (sc->reader)
 		(*sc->reader)(sc);

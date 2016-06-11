@@ -22,6 +22,13 @@ static int reader(struct scanner *sc)
 	struct iphdr *ip;
 	int ret;
 
+	ret = recv(sc->rawfd, sc->ibuf, sizeof(sc->ibuf), 0);
+	if (ret < 0) {
+		if (errno == EAGAIN)
+			return;
+		fatal("recv(3)");
+	}
+
 	/* Drop the packet which is not from the destination. */
 	sin = (struct sockaddr_in *) sc->dst->ai_addr;
 	ip = (struct iphdr *) sc->ibuf;
