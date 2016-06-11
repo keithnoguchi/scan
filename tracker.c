@@ -2,14 +2,17 @@
 
 #include "tracker.h"
 
+static const unsigned short default_start_port = 1;
+static const unsigned short default_end_port = UINT16_MAX;
+
 void tracker_init(struct tracker *t, const unsigned short start,
 		const unsigned short end)
 {
 	int i;
 
 	/* Member variables. */
-	t->start = start;
-	t->end = end;
+	t->start = start ? start : default_start_port;
+	t->end = end ? end : default_end_port;
 	t->next = t->start;
 
 	/* Reset the port status. */

@@ -8,11 +8,6 @@
 #include "utils.h"
 #include "scanner.h"
 
-/* Default variables. */
-static const unsigned short default_start_port = 1;
-static const unsigned short default_end_port = UINT16_MAX;
-static char *const default_ifname = NULL;
-
 static void usage(const char *const progname)
 {
 	const char *const usage = "\
@@ -24,9 +19,9 @@ Usage: %s [-hdx46] [-p port] [-i ifname] [-t sec] destination\n";
 
 int main(int argc, char *argv[])
 {
-	unsigned short start_port = default_start_port;
-	unsigned short end_port = default_end_port;
-	char *ifname = default_ifname;
+	unsigned short start_port = 0;
+	unsigned short end_port = 0;
+	char *ifname = NULL;
 	int domain = PF_INET;
 	struct scanner sc;
 	char *dstname;
@@ -53,8 +48,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'p':
 			port = atoi(optarg);
-			if (port < default_start_port
-					|| port > default_end_port)
+			if (port < 1 || port > UINT16_MAX)
 				fprintf(stderr, "Invalid port, ignored\n");
 			else
 				start_port = end_port = port;
