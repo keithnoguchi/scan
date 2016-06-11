@@ -3,6 +3,7 @@ CFLAGS = -I. -g -D_GNU_SOURCE
 CXXFLAGS = -I. -I/usr/local/include
 LDXXFLAGS = -L/usr/local/lib -lCppUTest
 TARGET = scanner
+TARGET_OBJ = main.o
 TEST_TARGET = tests/test
 TEST_OPS := -c -v
 SRC := scanner.c \
@@ -33,4 +34,4 @@ tests/%.o: tests/%.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 clean:
-	$(RM) $(OBJ) $(TEST_OBJ) $(TMP) $(TARGET) $(TEST_TARGET)
+	$(RM) $(OBJ) $(TARGET_OBJ) $(TEST_OBJ) $(TMP) $(TARGET) $(TEST_TARGET)
