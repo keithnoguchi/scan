@@ -117,10 +117,9 @@ static int writer(struct scanner *sc)
 		return -1;
 	}
 
+	/* Store the destination address string for debugging purpose. */
 	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
 	inet_ntop(AF_INET6, &sin->sin6_addr, sc->addr, INET6_ADDRSTRLEN);
-	debug("Sent to %s:%d\n", sc->addr, ntohs(tcp->dest));
-	dump(sc->obuf, sc->olen);
 
 	return ret;
 }

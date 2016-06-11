@@ -113,9 +113,8 @@ static int writer(struct scanner *sc)
 		return -1;
 	}
 
+	/* Store the destination address string for debugging purpose. */
 	inet_ntop(AF_INET, &ip->daddr, sc->addr, INET_ADDRSTRLEN);
-	debug("Sent to %s:%d\n", sc->addr, ntohs(tcp->dest));
-	dump(sc->obuf, sc->olen);
 
 	return ret;
 }

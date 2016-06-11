@@ -83,6 +83,8 @@ static inline void scanner_writer(struct scanner *sc)
 			return;
 
 	sc->ocounter++;
+	debug("Sent to %s:%d\n", sc->addr, sc->next_port);
+	dump(sc->obuf, sc->olen);
 
 	if (++sc->next_port > sc->end_port) {
 		/* Disable writer event. */
