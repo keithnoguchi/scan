@@ -12,6 +12,23 @@
 
 static const size_t tcphdrlen = 20;
 
+/* Pseudo IP + TCP header for checksum calculation. */
+struct cdata {
+	struct in6_addr saddr;
+	struct in6_addr daddr;
+	u_int32_t length;
+	u_int8_t buf[3];
+	u_int8_t nexthdr;
+	struct tcphdr tcp;
+};
+
+static unsigned short tcp_checksum(struct scanner *sc, struct tcphdr *tcp)
+{
+	struct cdata *cdata = (struct cdata *) sc->cbuf;
+	cdata->tcp = *tcp;
+	return checksum((uint16_t *) cdata, sizeof(struct cdata));
+}
+
 static int reader(struct scanner *sc)
 {
 	struct sockaddr_in6 *sin;
@@ -68,21 +85,6 @@ static int reader(struct scanner *sc)
 	return port;
 }
 
-static unsigned short tcp_checksum(struct scanner *sc, struct tcphdr *tcp)
-{
-	struct cdata {
-		struct in6_addr saddr;
-		struct in6_addr daddr;
-		u_int32_t length;
-		u_int8_t buf[3];
-		u_int8_t nexthdr;
-		struct tcphdr tcp;
-	} *cdata = (struct cdata *) sc->cbuf;
-	cdata->tcp = *tcp;
-
-	return checksum((uint16_t *) cdata, sizeof(struct cdata));
-}
-
 static int writer(struct scanner *sc)
 {
 	struct sockaddr_in6 *sin;
@@ -125,6 +127,7 @@ static int writer(struct scanner *sc)
 
 int scanner6_tcp_init(struct scanner *sc)
 {
+	struct cdata *cdata = (struct cdata *) sc->cbuf;
 	struct sockaddr_in6 *sin;
 
 	/* TCPv6 specific reader/writer. */
@@ -135,14 +138,6 @@ int scanner6_tcp_init(struct scanner *sc)
 	sc->olen = sizeof(struct tcphdr);
 
 	/* Prepare the checksum buffer. */
-	struct cdata {
-		struct in6_addr saddr;
-		struct in6_addr daddr;
-		u_int32_t length;
-		u_int8_t buf[3];
-		u_int8_t nexthdr;
-		struct tcphdr tcp;
-	} *cdata = (struct cdata *) sc->cbuf;
 	sin = (struct sockaddr_in6 *) &sc->src;
 	cdata->saddr = sin->sin6_addr;
 	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
