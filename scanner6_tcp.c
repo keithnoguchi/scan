@@ -127,18 +127,6 @@ static int writer(struct scanner *sc)
 int scanner6_tcp_init(struct scanner *sc)
 {
 	struct sockaddr_in6 *sin;
-	struct in6_pktinfo ipi;
-	int ret;
-
-	sin = (struct sockaddr_in6 *) &sc->src;
-	ipi.ipi6_addr = sin->sin6_addr;
-	ret = setsockopt(sc->rawfd, IPPROTO_IPV6, IPV6_PKTINFO, &ipi,
-			sizeof(ipi));
-	if (ret != 0)
-		fatal("setsockopt(IPV6_PKTINFO)");
-
-	inet_ntop(sc->dst->ai_family, &sin->sin6_addr, addr, sizeof(addr));
-	debug("Send from %s\n", addr);
 
 	/* TCPv6 specific reader/writer. */
 	sc->reader = reader;
@@ -164,5 +152,5 @@ int scanner6_tcp_init(struct scanner *sc)
 	cdata->buf[0] = cdata->buf[1] = cdata->buf[2] = 0;
 	cdata->nexthdr = sc->dst->ai_protocol;
 
-	return ret;
+	return 0;
 }

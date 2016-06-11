@@ -33,6 +33,10 @@ struct scanner {
 	struct sockaddr_storage src;
 	struct addrinfo *dst;
 
+	/* Address string buffer. */
+	size_t addrstr_len;
+	char *addr;
+
 	/* Scanning port related info. */
 	int next_port;
 	int start_port;
@@ -42,7 +46,7 @@ struct scanner {
 	size_t icounter;
 	size_t ocounter;
 
-	/* TCP header checksum buffer. */
+	/* TCP/UDP checksum buffer. */
 	unsigned char cbuf[BUFSIZ];
 
 	/* Address validator. */

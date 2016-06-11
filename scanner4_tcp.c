@@ -122,7 +122,6 @@ static int writer(struct scanner *sc)
 int scanner4_tcp_init(struct scanner *sc)
 {
 	struct iphdr *ip = (struct iphdr *) sc->obuf;
-	int ret;
 
 	/* TCPv4 specific reader/writer. */
 	sc->reader = reader;
@@ -146,5 +145,5 @@ int scanner4_tcp_init(struct scanner *sc)
 	cdata->protocol = sc->dst->ai_protocol;
 	cdata->length = htons(tcphdrlen);
 
-	return ret;
+	return 0;
 }
