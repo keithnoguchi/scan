@@ -149,7 +149,7 @@ int scanner_init(struct scanner *sc, const char *name, int family,
 	int ret, flags;
 
 	memset(sc, 0, sizeof(struct scanner));
-	sc->eventfd = sc->rawfd = -1;
+	sc->eventfd = sc->rawfd = sc->exceptfd = -1;
 
 	/* Initialize Protocol family constants. */
 	switch (family) {
@@ -234,6 +234,13 @@ void scanner_term(struct scanner *sc)
 		sc->dst = NULL;
 	}
 
+	if (sc->exceptfd != -1) {
+		if (sc->eventfd != -1)
+			epoll_ctl(sc->eventfd, EPOLL_CTL_DEL,
+					sc->exceptfd, NULL);
+		close(sc->exceptfd);
+	}
+
 	if (sc->rawfd != -1) {
 		if (sc->eventfd != -1)
 			epoll_ctl(sc->eventfd, EPOLL_CTL_DEL,
@@ -246,5 +253,5 @@ void scanner_term(struct scanner *sc)
 	}
 
 	memset(sc, 0, sizeof(struct scanner));
-	sc->eventfd = sc->rawfd = -1;
+	sc->eventfd = sc->rawfd = sc->exceptfd = -1;
 }

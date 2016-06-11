@@ -22,8 +22,9 @@ struct scanner {
 	struct epoll_event ev;
 	int eventfd;
 
-	/* Raw socket for the data packets. */
+	/* Raw and exception socket for data packets. */
 	int rawfd;
+	int exceptfd;
 
 	/* Start and last print time. */
 	time_t start_time, last_print_time;
