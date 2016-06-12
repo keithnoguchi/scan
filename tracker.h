@@ -44,7 +44,7 @@ static inline void tracker_set_closed(struct tracker *t,
 		const unsigned short port)
 {
 	if (port)
-		if (t->status[port] == OPEN) {
+		if (t->status[port] == INIT || t->status[port] == OPEN) {
 			t->status[port] = CLOSED;
 			info("Port %d is closed on %s\n", port, t->addr);
 		}
