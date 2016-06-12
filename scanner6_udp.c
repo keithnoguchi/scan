@@ -59,7 +59,7 @@ static int icmp_reader(struct scanner *sc)
 		fatal("recv(3)");
 	}
 
-	/* Ignore packet less than 56(IP + ICMP + IP + UDP header) bytes. */
+	/* Ignore packet less than 52(ICMP + IP + UDP header) bytes. */
 	if (ret < icmphdrlen + iphdrlen + udphdrlen)
 		return -1;
 
@@ -77,7 +77,7 @@ static int icmp_reader(struct scanner *sc)
 	ip = (struct ip6_hdr *) (icmp + 1);
 	udp = (struct udphdr *) (ip + 1);
 	port = ntohs(udp->source);
-	debug("Recv from %s:%d\n", sc->addr, port);
+	debug("Recv ICMP from %s:%d\n", sc->addr, port);
 	dump(sc->ibuf, ret);
 	sc->icounter++;
 
@@ -126,7 +126,7 @@ static int udp_reader(struct scanner *sc)
 	inet_ntop(AF_INET6, &addr.sin6_addr, sc->addr, INET6_ADDRSTRLEN);
 	udp = (struct udphdr *) sc->ibuf;
 	port = ntohs(udp->source);
-	debug("Recv from %s:%d\n", sc->addr, port);
+	info("Recv UDP from %s:%d\n", sc->addr, port);
 	dump(sc->ibuf, ret);
 	sc->icounter++;
 
@@ -140,7 +140,7 @@ static int reader(struct scanner *sc)
 {
 	/* We need to figure out how to multiplex those two
 	 * sockets through epoll in the future. */
-	udp_reader(sc);
+	/*udp_reader(sc); */
 	return icmp_reader(sc);
 }
 
@@ -179,12 +179,20 @@ int scanner6_udp_init(struct scanner *sc)
 {
 	struct cdata *cdata = (struct cdata *) sc->cbuf;
 	struct sockaddr_in6 *sin;
+	struct in6_pktinfo ipi;
 	int ret, flags;
 
 	/* Create an exception socket for ICMP packet handling. */
-	sc->exceptfd = socket(PF_INET6, SOCK_RAW, IPPROTO_ICMP);
+	sc->exceptfd = socket(PF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
 	if (sc->exceptfd == -1)
 		fatal("socket(IPPROTO_ICMP");
+
+	sin = (struct sockaddr_in6 *) &sc->src;
+	ipi.ipi6_addr = sin->sin6_addr;
+	ret = setsockopt(sc->exceptfd, IPPROTO_IPV6, IPV6_PKTINFO, &ipi,
+			sizeof(ipi));
+	if (ret != 0)
+		fatal("setsockopt(IPV6_PKTINFO)");
 
 	/* Make socket non-blocking. */
 	flags = fcntl(sc->exceptfd, F_GETFL, 0);

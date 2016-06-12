@@ -69,7 +69,7 @@ static int icmp_reader(struct scanner *sc)
 	ip = (struct iphdr *) (icmp + 1);
 	udp = (struct udphdr *) (ip + 1);
 	port = ntohs(udp->dest);
-	debug("Recv from %s:%d\n", sc->addr, port);
+	debug("Recv ICMP from %s:%d\n", sc->addr, port);
 	dump(sc->ibuf, ret);
 	sc->icounter++;
 
@@ -111,7 +111,7 @@ static int udp_reader(struct scanner *sc)
 	inet_ntop(AF_INET, &ip->saddr, sc->addr, INET_ADDRSTRLEN);
 	udp = (struct udphdr *) (ip + 1);
 	port = ntohs(udp->source);
-	debug("Recv from %s:%d\n", sc->addr, port);
+	debug("Recv UDP from %s:%d\n", sc->addr, port);
 	dump(sc->ibuf, ret);
 	sc->icounter++;
 
