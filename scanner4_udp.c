@@ -17,7 +17,7 @@ static const size_t iphdrlen = 20;
 static const size_t icmphdrlen = 8;
 static const size_t udphdrlen = 8;
 
-/* Pseudo IP + TCP header for checksum calculation. */
+/* Pseudo IP + UDP header for checksum calculation. */
 struct cdata {
 	u_int32_t saddr;
 	u_int32_t daddr;

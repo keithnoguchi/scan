@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "scanner.h"
 #include "scanner6_tcp.h"
+#include "scanner6_udp.h"
 
 static char addr[INET6_ADDRSTRLEN];
 
@@ -50,8 +51,11 @@ int scanner6_init(struct scanner *sc)
 	case IPPROTO_TCP:
 		ret = scanner6_tcp_init(sc);
 		break;
+	case IPPROTO_UDP:
+		ret = scanner6_udp_init(sc);
+		break;
 	default:
-		warn("TCP is the only supported protocol in IPv6\n");
+		warn("TCP and UDP are the only supported protocol for IPv6\n");
 		ret = -1;
 		break;
 	}

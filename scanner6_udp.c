@@ -3,7 +3,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip6.h>
-#include <netinet/tcp.h>
+#include <netinet/icmp6.h>
+#include <netinet/udp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -11,33 +12,33 @@
 #include "scanner.h"
 #include "tracker.h"
 
-static const size_t tcphdrlen = 20;
+static const size_t udphdrlen = 8;
 
-/* Pseudo IP + TCP header for checksum calculation. */
+/* Pseudo IP + UDP header for checksum calculation. */
 struct cdata {
 	struct in6_addr saddr;
 	struct in6_addr daddr;
 	u_int32_t length;
 	u_int8_t buf[3];
 	u_int8_t nexthdr;
-	struct tcphdr tcp;
+	struct udphdr udp;
 };
 
-static unsigned short tcp_checksum(struct scanner *sc, struct tcphdr *tcp)
+static unsigned short udp_checksum(struct scanner *sc, struct udphdr *udp)
 {
 	struct cdata *cdata = (struct cdata *) sc->cbuf;
-	cdata->tcp = *tcp;
+	cdata->udp = *udp;
 	return checksum((uint16_t *) cdata, sizeof(struct cdata));
 }
 
-static int reader(struct scanner *sc)
+static int udp_reader(struct scanner *sc)
 {
 	struct sockaddr_in6 *sin;
 	struct sockaddr_in6 addr;
 	struct msghdr msg;
 	struct iovec iov;
 	unsigned short port;
-	struct tcphdr *tcp;
+	struct udphdr *udp;
 	int ret;
 
 	iov.iov_base = sc->ibuf;
@@ -53,8 +54,8 @@ static int reader(struct scanner *sc)
 		fatal("recv(3)");
 	}
 
-	/* Ignore packet less than 20(TCP header) bytes. */
-	if (ret < tcphdrlen)
+	/* Ignore packet less than 8(UDP header) bytes. */
+	if (ret < udphdrlen)
 		return -1;
 
 	/* Drop the packet which is not from the destination. */
@@ -67,18 +68,11 @@ static int reader(struct scanner *sc)
 	}
 
 	inet_ntop(AF_INET6, &addr.sin6_addr, sc->addr, INET6_ADDRSTRLEN);
-	tcp = (struct tcphdr *) sc->ibuf;
-	port = ntohs(tcp->source);
+	udp = (struct udphdr *) sc->ibuf;
+	port = ntohs(udp->source);
 	debug("Recv from %s:%d\n", sc->addr, port);
 	dump(sc->ibuf, ret);
 	sc->icounter++;
-
-	/* We only care about packet with SA flag on. */
-	if (tcp->syn == 0 || tcp->ack == 0) {
-		debug("Drop packet w/o SYN/ACK from host(%s:%d)\n",
-				sc->addr, port);
-		return -1;
-	}
 
 	/* Report the port is open! */
 	tracker_set_open(&sc->tracker, port);
@@ -86,27 +80,26 @@ static int reader(struct scanner *sc)
 	return ret;
 }
 
+static int reader(struct scanner *sc)
+{
+	/* We need to figure out how to multiplex those two
+	 * sockets through epoll in the future. */
+	return udp_reader(sc);
+}
+
 static int writer(struct scanner *sc)
 {
 	struct sockaddr_in6 *sin;
-	struct tcphdr *tcp;
+	struct udphdr *udp;
 	int ret;
 
-	/* TCP header. */
-	tcp = (struct tcphdr *) sc->obuf;
-	tcp->source = htons(1024);
-	tcp->dest = htons(sc->tracker.next);
-	tcp->seq = 0;
-	tcp->ack_seq = 0;
-	tcp->res1 = 0;
-	tcp->doff = 5;
-	tcp->syn = 1;
-	tcp->rst = tcp->psh = tcp->ack = tcp->urg = 0;
-	tcp->res2 = 0;
-	tcp->window = 0;
-	tcp->check = 0;
-	tcp->urg_ptr = 0;
-	tcp->check = tcp_checksum(sc, tcp);
+	/* UDP header. */
+	udp = (struct udphdr *) sc->obuf;
+	udp->source = htons(1024);
+	udp->dest = htons(sc->tracker.next);
+	udp->len = htons(udphdrlen);
+	udp->check = 0;
+	udp->check = udp_checksum(sc, udp);
 
 	ret = sendto(sc->rawfd, sc->obuf, sc->olen, 0, sc->dst->ai_addr,
 			sc->dst->ai_addrlen);
@@ -125,7 +118,7 @@ static int writer(struct scanner *sc)
 	return ret;
 }
 
-int scanner6_tcp_init(struct scanner *sc)
+int scanner6_udp_init(struct scanner *sc)
 {
 	struct cdata *cdata = (struct cdata *) sc->cbuf;
 	struct sockaddr_in6 *sin;
@@ -134,15 +127,15 @@ int scanner6_tcp_init(struct scanner *sc)
 	sc->reader = reader;
 	sc->writer = writer;
 
-	/* We only send TCP header portion. */
-	sc->olen = sizeof(struct tcphdr);
+	/* We only send UDP header portion. */
+	sc->olen = sizeof(struct udphdr);
 
 	/* Prepare the checksum buffer. */
 	sin = (struct sockaddr_in6 *) &sc->src;
 	cdata->saddr = sin->sin6_addr;
 	sin = (struct sockaddr_in6 *) sc->dst->ai_addr;
 	cdata->daddr = sin->sin6_addr;
-	cdata->length = htonl(tcphdrlen);
+	cdata->length = htonl(udphdrlen);
 	cdata->buf[0] = cdata->buf[1] = cdata->buf[2] = 0;
 	cdata->nexthdr = sc->dst->ai_protocol;
 
