@@ -9,6 +9,7 @@
 
 #include "utils.h"
 #include "scanner.h"
+#include "tracker.h"
 
 static const size_t iphdrlen = 20;
 static const size_t tcphdrlen = 20;
@@ -73,7 +74,10 @@ static int reader(struct scanner *sc)
 		return -1;
 	}
 
-	return port;
+	/* Report the port is open! */
+	tracker_set_open(&sc->tracker, port);
+
+	return ret;
 }
 
 static int writer(struct scanner *sc)

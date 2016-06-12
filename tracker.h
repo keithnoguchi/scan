@@ -32,12 +32,22 @@ static inline void tracker_set_open(struct tracker *t,
 		}
 }
 
+static inline void tracker_open_all(struct tracker *t)
+{
+	int port;
+
+	for (port = t->start; port <= t->end; port++)
+		t->status[port] = OPEN;
+}
+
 static inline void tracker_set_closed(struct tracker *t,
 		const unsigned short port)
 {
 	if (port)
-		if (t->status[port] == INIT)
+		if (t->status[port] == OPEN) {
 			t->status[port] = CLOSED;
+			info("Port %d is closed on %s\n", port, t->addr);
+		}
 }
 
 static inline const port_status_t tracker_status(const struct tracker *t,

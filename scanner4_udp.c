@@ -72,7 +72,10 @@ static int icmp_reader(struct scanner *sc)
 	dump(sc->ibuf, ret);
 	sc->icounter++;
 
-	return port;
+	/* Report the port is closed. */
+	tracker_set_closed(&sc->tracker, port);
+
+	return ret;
 }
 
 static int reader(struct scanner *sc)
@@ -159,6 +162,9 @@ int scanner4_udp_init(struct scanner *sc)
 	sc->exceptfd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (sc->exceptfd == -1)
 		fatal("socket(IPPROTO_ICMP");
+
+	/* Change the default port status to all open. */
+	tracker_open_all(&sc->tracker);
 
 	/* Make socket non-blocking. */
 	flags = fcntl(sc->exceptfd, F_GETFL, 0);

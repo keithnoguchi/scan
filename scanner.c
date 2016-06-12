@@ -70,14 +70,9 @@ static int srcaddr(struct scanner *sc, const char *ifname)
 
 static inline void scanner_reader(struct scanner *sc)
 {
-	int port;
-
 	/* Call the Protocol specific reader, if there is. */
 	if (sc->reader)
-		if ((port = (*sc->reader)(sc)) <= 0)
-			return;
-
-	tracker_set_open(&sc->tracker, port);
+		(*sc->reader)(sc);
 }
 
 static inline void scanner_writer(struct scanner *sc)

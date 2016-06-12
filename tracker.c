@@ -14,6 +14,7 @@ void tracker_print(const struct tracker *t)
 	for (port = t->start; port <= t->end; port++)
 		if (t->status[port] == OPEN)
 			printf("%d ", port);
+
 	printf("\n");
 }
 
