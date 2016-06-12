@@ -11,7 +11,8 @@
 static void usage(const char *const progname)
 {
 	const char *const usage = "\
-Usage: %s [-dhuvx46] [-p port] [-i ifname] [-t sec] destination\n";
+Usage: %s [-dhuvx46] [-p port] [-b begin_port] [-e end_port] [-i ifname]\
+          [-t sec] destination\n";
 
 	fprintf(stderr, usage, progname);
 	exit(EXIT_FAILURE);
@@ -19,7 +20,7 @@ Usage: %s [-dhuvx46] [-p port] [-i ifname] [-t sec] destination\n";
 
 int main(int argc, char *argv[])
 {
-	unsigned short start_port = 0;
+	unsigned short begin_port = 0;
 	unsigned short end_port = 0;
 	char *ifname = NULL;
 	int proto = IPPROTO_TCP;
@@ -30,7 +31,7 @@ int main(int argc, char *argv[])
 	int opt;
 	int ret;
 
-	while ((opt = getopt(argc, argv, "dhuvx46p:i:t:")) != -1) {
+	while ((opt = getopt(argc, argv, "dhuvx46b:e:p:i:t:")) != -1) {
 		switch (opt) {
 		case 'd':
 			debug_flag = true;
@@ -53,12 +54,26 @@ int main(int argc, char *argv[])
 		case '6':
 			domain = PF_INET6;
 			break;
+		case 'b':
+			port = atoi(optarg);
+			if (port < 1 || port > UINT16_MAX)
+				fprintf(stderr, "Invalid port, ignored\n");
+			else
+				begin_port = port;
+			break;
+		case 'e':
+			port = atoi(optarg);
+			if (port < 1 || port > UINT16_MAX)
+				fprintf(stderr, "Invalid port, ignored\n");
+			else
+				end_port = port;
+			break;
 		case 'p':
 			port = atoi(optarg);
 			if (port < 1 || port > UINT16_MAX)
 				fprintf(stderr, "Invalid port, ignored\n");
 			else
-				start_port = end_port = port;
+				begin_port = end_port = port;
 			break;
 		case 'i':
 			ifname = optarg;
@@ -78,7 +93,7 @@ int main(int argc, char *argv[])
 	/* Initialize the scanner with the hostname, address family,
 	 * and the protocol. */
 	ret = scanner_init(&sc, dstname, domain, proto,
-			start_port, end_port, ifname);
+			begin_port, end_port, ifname);
 	if (ret == -1)
 		exit(EXIT_FAILURE);
 
