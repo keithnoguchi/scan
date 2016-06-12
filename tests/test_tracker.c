@@ -96,6 +96,7 @@ TEST(Tracker, CheckPortClosedStatus)
 {
 	const port_status_t expected = CLOSED;
 	const unsigned short port = 65535;
+	tracker_set_open(&tracker, port);
 	tracker_set_closed(&tracker, port);
 	LONGS_EQUAL(expected, tracker_status(&tracker, port));
 }
