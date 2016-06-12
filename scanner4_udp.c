@@ -163,9 +163,6 @@ int scanner4_udp_init(struct scanner *sc)
 	if (sc->exceptfd == -1)
 		fatal("socket(IPPROTO_ICMP");
 
-	/* Change the default port status to all open. */
-	tracker_open_all(&sc->tracker);
-
 	/* Make socket non-blocking. */
 	flags = fcntl(sc->exceptfd, F_GETFL, 0);
 	if (flags == -1)
@@ -173,6 +170,9 @@ int scanner4_udp_init(struct scanner *sc)
 	ret = fcntl(sc->exceptfd, F_SETFL, flags|O_NONBLOCK);
 	if (ret == -1)
 		fatal("fcntl(F_SETFL, O_NONBLOCK)");
+
+	/* Change the default port status to all open. */
+	tracker_open_all(&sc->tracker);
 
 	/* TCPv4 specific reader/writer. */
 	sc->reader = reader;
