@@ -51,7 +51,7 @@ static int icmp_reader(struct scanner *sc)
 	}
 
 	/* Ignore packet less than 56(IP + ICMP + IP + UDP header) bytes. */
-	if (ret < iphdrlen + icmphdrlen + udphdrlen)
+	if (ret < iphdrlen + icmphdrlen + iphdrlen + udphdrlen)
 		return -1;
 
 	/* Drop the packet which is not from the destination. */
@@ -175,14 +175,6 @@ int scanner4_udp_init(struct scanner *sc)
 	if (sc->exceptfd == -1)
 		fatal("socket(IPPROTO_ICMP");
 
-	/* Register it to the event manager. */
-	sc->ev.events = EPOLLIN;
-	sc->ev.data.fd = sc->exceptfd;
-	sc->ev.data.ptr = (void *)sc;
-	ret = epoll_ctl(sc->eventfd, EPOLL_CTL_ADD, sc->exceptfd, &sc->ev);
-	if (ret == -1)
-		fatal("epoll_ctl(2)");
-
 	/* Make socket non-blocking. */
 	flags = fcntl(sc->exceptfd, F_GETFL, 0);
 	if (flags == -1)
@@ -191,10 +183,18 @@ int scanner4_udp_init(struct scanner *sc)
 	if (ret == -1)
 		fatal("fcntl(F_SETFL, O_NONBLOCK)");
 
+	/* Register it to the event manager. */
+	sc->ev.events = EPOLLIN;
+	sc->ev.data.fd = sc->exceptfd;
+	sc->ev.data.ptr = (void *)sc;
+	ret = epoll_ctl(sc->eventfd, EPOLL_CTL_ADD, sc->exceptfd, &sc->ev);
+	if (ret == -1)
+		fatal("epoll_ctl(2)");
+
 	/* Change the default port status to all open. */
 	tracker_open_all(&sc->tracker);
 
-	/* TCPv4 specific reader/writer. */
+	/* UDPv4 specific reader/writer. */
 	sc->reader = reader;
 	sc->writer = writer;
 
