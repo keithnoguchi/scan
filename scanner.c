@@ -70,6 +70,8 @@ static int srcaddr(struct scanner *sc, const char *ifname)
 
 static inline void scanner_reader(struct scanner *sc)
 {
+	int ret;
+
 	/* Call the Protocol specific reader, if there is. */
 	if (sc->reader)
 		(*sc->reader)(sc);

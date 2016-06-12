@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
@@ -162,6 +163,14 @@ int scanner4_udp_init(struct scanner *sc)
 	sc->exceptfd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (sc->exceptfd == -1)
 		fatal("socket(IPPROTO_ICMP");
+
+	/* Register it to the event manager. */
+	sc->ev.events = EPOLLIN;
+	sc->ev.data.fd = sc->exceptfd;
+	sc->ev.data.ptr = (void *)sc;
+	ret = epoll_ctl(sc->eventfd, EPOLL_CTL_ADD, sc->exceptfd, &sc->ev);
+	if (ret == -1)
+		fatal("epoll_ctl(2)");
 
 	/* Make socket non-blocking. */
 	flags = fcntl(sc->exceptfd, F_GETFL, 0);
