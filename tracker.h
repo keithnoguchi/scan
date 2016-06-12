@@ -11,7 +11,7 @@ struct tracker {
 	char *addr;
 
 	/* Start and end of the scanned port. */
-	unsigned short start;
+	unsigned short begin;
 	unsigned short end;
 
 	/* Port tracker. */
@@ -36,7 +36,7 @@ static inline void tracker_open_all(struct tracker *t)
 {
 	int port;
 
-	for (port = t->start; port <= t->end; port++)
+	for (port = t->begin; port <= t->end; port++)
 		t->status[port] = OPEN;
 }
 
@@ -58,7 +58,7 @@ static inline const port_status_t tracker_status(const struct tracker *t,
 
 /* Prototypes. */
 void tracker_print(const struct tracker *t);
-void tracker_init(struct tracker *t, const unsigned short start_port,
+void tracker_init(struct tracker *t, const unsigned short begin_port,
 		const unsigned short end_port, char *const addr);
 void tracker_term(struct tracker *t);
 

@@ -27,7 +27,7 @@ TEST_GROUP(Tracker)
 
 TEST(Tracker, CheckDefaultStartPort)
 {
-	LONGS_EQUAL(1, tracker.start);
+	LONGS_EQUAL(1, tracker.begin);
 }
 
 TEST(Tracker, CheckDefaultEndPort)
@@ -44,7 +44,7 @@ TEST(Tracker, CheckSpecifiedStartPort)
 {
 	unsigned short expected = 99;
 	tracker_init(&tracker, expected, 0, NULL);
-	LONGS_EQUAL(expected, tracker.start);
+	LONGS_EQUAL(expected, tracker.begin);
 }
 
 TEST(Tracker, CheckSpecifiedEndPort)
@@ -56,10 +56,10 @@ TEST(Tracker, CheckSpecifiedEndPort)
 
 TEST(Tracker, CheckWrongRangePortBackToDefaultPorts)
 {
-	unsigned short expected_start = 1;
+	unsigned short expected_begin = 1;
 	unsigned short expected_end = UINT16_MAX;
 	tracker_init(&tracker, 100, 99, NULL);
-	LONGS_EQUAL(expected_start, tracker.start);
+	LONGS_EQUAL(expected_begin, tracker.begin);
 	LONGS_EQUAL(expected_end, tracker.end);
 }
 
