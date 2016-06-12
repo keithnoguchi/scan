@@ -88,7 +88,7 @@ static inline void scanner_writer(struct scanner *sc)
 	sc->ocounter++;
 
 	if (sc->tracker.next++ == sc->tracker.end) {
-		/* Disable writer event. */
+		/* Enable only reader. */
 		sc->ev.events = EPOLLIN;
 		sc->ev.data.fd = sc->rawfd;
 		sc->ev.data.ptr = (void *)sc;

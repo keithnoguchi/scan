@@ -79,7 +79,7 @@ static int icmp_reader(struct scanner *sc)
 	return ret;
 }
 
-static int reader(struct scanner *sc)
+static int udp_reader(struct scanner *sc)
 {
 	struct sockaddr_in *sin;
 	unsigned short port;
@@ -90,7 +90,7 @@ static int reader(struct scanner *sc)
 	ret = recv(sc->rawfd, sc->ibuf, sizeof(sc->ibuf), 0);
 	if (ret < 0) {
 		if (errno == EAGAIN)
-			return icmp_reader(sc);
+			return -1;
 		fatal("recv(3)");
 	}
 
@@ -115,7 +115,18 @@ static int reader(struct scanner *sc)
 	dump(sc->ibuf, ret);
 	sc->icounter++;
 
-	return port;
+	/* Report the port is open! */
+	tracker_set_open(&sc->tracker, port);
+
+	return ret;
+}
+
+static int reader(struct scanner *sc)
+{
+	/* We need to figure out how to multiplex those two
+	 * sockets through epoll in the future. */
+	udp_reader(sc);
+	return icmp_reader(sc);
 }
 
 static int writer(struct scanner *sc)
