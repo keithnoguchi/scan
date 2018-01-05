@@ -14,7 +14,7 @@ TMP := *~ *.swp a.out **/*~ **/*.swp **/a.out
 DEPS = utils.h scanner.h tracker.h \
        scanner4.h scanner4_tcp.h scanner4_udp.h \
        scanner6.h scanner6_tcp.h scanner6_udp.h
-TEST = tests/test_main.c tests/test_scanner.c tests/test_tracker.c
+TEST = tests/main.c tests/scanner_test.c tests/tracker_test.c
 TEST_OBJ := $(TEST:.c=.o)
 
 .PHONY: all test clean
