@@ -11,4 +11,4 @@ install:
   - cd ../
 before_script:
   - uname -an
-script: make && sudo make test
+script: ./configure && make test

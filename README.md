@@ -7,7 +7,7 @@
 ## How to build
 
 ```
-$ make
+$ configure && make
 ```
 
 ## How to run
