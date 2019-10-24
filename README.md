@@ -6,27 +6,27 @@ An IPv4 and IPv6 TCP port scanner in C.
 
 [![asciicast](https://asciinema.org/a/48492.png)](https://asciinema.org/a/48492)
 
-## How to build
+## Build
 
 ```
 $ ./configure && make
 ```
 
-## How to run
-
-```
-$ sudo ./scan localhost
-```
-
-We need to be as root for RAW socket.
-
-## How to test
+## Test
 
 ```
 $ make test
 ```
 
-## How to play asciicast locally
+## Execution
+
+```
+$ sudo ./scan localhost
+```
+
+You need to be root, as `scan` uses the raw socket to the packet handling.
+
+## ASCII cast
 
 ```
 $ asciinema play scan.json
