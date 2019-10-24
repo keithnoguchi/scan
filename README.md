@@ -1,19 +1,21 @@
-# Simple port scanner
+# scan
 
-[![Build Status](https://travis-ci.org/keinohguchi/scanner.svg)](https://travis-ci.org/keinohguchi/scanner)
+An IPv4 and IPv6 TCP port scanner in C.
+
+[![Build Status](https://travis-ci.org/keithnoguchi/scan.svg)](https://travis-ci.org/keithnoguchi/scan)
 
 [![asciicast](https://asciinema.org/a/48492.png)](https://asciinema.org/a/48492)
 
 ## How to build
 
 ```
-$ configure && make
+$ ./configure && make
 ```
 
 ## How to run
 
 ```
-$ sudo ./scanner localhost
+$ sudo ./scan localhost
 ```
 
 We need to be as root for RAW socket.
@@ -27,7 +29,7 @@ $ make test
 ## How to play asciicast locally
 
 ```
-$ asciinema play scanner.json
+$ asciinema play scan.json
 ```
 
 Happy hacking!

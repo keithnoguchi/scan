@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([scanner], [1.0], [mail@nohguchi.com])
+AC_INIT([scan], [1.0], [keith.noguchi@gmail.com])
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([tracker.h])
