@@ -1,6 +1,6 @@
 # scan
 
-An IPv4 and IPv6 TCP port scanner in C.
+An epoll(7) based single threaded IPv4 and IPv6 TCP/UDP port scanner in C.
 
 [![Build Status](https://travis-ci.org/keithnoguchi/scan.svg)](https://travis-ci.org/keithnoguchi/scan)
 
